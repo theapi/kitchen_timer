@@ -25,6 +25,8 @@
 #define NUM_8    B11111011 //8
 #define NUM_9    B11101011 //9
 #define NUM_DOT  B00000100  //.
+
+#define COMPARE_REG 64 // OCR2A when to interupt (datasheet: 18.11.4)
  
 //Pin connected to ST_CP of 74HC595
 int latchPin = 8;
@@ -35,11 +37,8 @@ int dataPin = 11;
 
 const byte digit_pins[DIGIT_COUNT] = {4,5,6,7};
 
-//holders for information you're going to pass to shifting function
-byte data;
-
-char digits[DIGIT_COUNT];
-byte current_digit = DIGIT_COUNT - 1; // The digit currently being shown in the multiplexing.
+volatile int display_number; // the number currently being displayed.
+volatile byte current_digit = DIGIT_COUNT - 1; // The digit currently being shown in the multiplexing.
 
 const byte digit_map[11] =      //seven segment digits in bits
 {
@@ -58,6 +57,12 @@ const byte digit_map[11] =      //seven segment digits in bits
 
 SimpleTimer timer;
 
+//timer 2 compare ISR
+ISR (TIMER2_COMPA_vect)
+{
+  updateDisplay();
+}
+
 void setup() 
 {
   Serial.begin(9600);
@@ -74,24 +79,28 @@ void setup()
   }
 
   // Initialize the digits to '0000'
-  sprintf(digits, "%04d", 0);
+  //sprintf(digits, "%04d", 0);
   
+  multiplexInit();
   
   timer.setInterval(1000, updateTime);
+  //timer.setInterval(1000, updateDisplay);
 }
 
 void loop() 
 {
-  timer.run();
-  updateDisplay(); // @TODO interupt driven update display
-  
+  timer.run();  
 }
 
 void updateTime()
 {
-  int now = millis() / 1000;
-  sprintf(digits, "%04d", now);
-  Serial.println(digits);
+  display_number = millis() / 1000;
+  Serial.println(display_number);
+  
+  //sprintf(digits, "%04d", now);
+  //Serial.println(digits);
+  
+  //display_buffer = digits;
 }
 
 void updateDisplay()
@@ -105,8 +114,30 @@ void updateDisplay()
     current_digit = 0;
   }
   
-  int num = digits[current_digit];
-  int i = num - 48;
+  //char digits[DIGIT_COUNT];
+  //itoa(1234, digits, 10);
+  //sprintf(digits, "%04d", foo);
+
+  int i;
+  // todo: make this neater
+  switch (current_digit) {
+    case 0:
+      i = display_number % 10000 / 1000;
+      break;
+    case 1:
+      i = display_number % 1000 / 100;
+      break;
+    case 2:
+      i = display_number % 100 / 10;
+      break;
+    case 3:
+      i = display_number % 10;
+      break;
+  }
+  
+  
+  //int num = digits[current_digit]; 
+  //int i = num - 48;
 
   // Shift the byte out to the display.
   digitalWrite(latchPin, LOW);
@@ -115,5 +146,33 @@ void updateDisplay()
   
   // Turn on the current digit
   digitalWrite(digit_pins[current_digit], LOW);
+}
+
+void multiplexInit(void)
+{
+  cli();//stop interrupts
+  
+  //set timer2 interrupt at 8kHz
+  TCCR2A = 0;// set entire TCCR2A register to 0
+  TCCR2B = 0;// same for TCCR2B
+  TCNT2  = 0;//initialize counter value to 0
+  // set compare match register 
+  OCR2A = COMPARE_REG;// = (16*10^6) / (8000*8) - 1 (must be <256)
+  // turn on CTC mode
+  TCCR2A |= (1 << WGM21);
+  // Set CS21 bit for 8 prescaler
+  //TCCR2B |= (1 << CS21);   
+  
+  // Datatasheet 18.11.2
+  // Set  prescaler
+  //TCCR2B = 0b00000110;
+  TCCR2B = 0b00000111; // 1024
+  
+  
+  // enable timer compare interrupt
+  TIMSK2 |= (1 << OCIE2A);
+  
+  sei();//allow interrupts
+  
 }
 
