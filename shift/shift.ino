@@ -14,17 +14,18 @@
 
 #define DIGIT_COUNT 4 // 4 digit display
  
-#define NUM_0    B11111010 //0
-#define NUM_1    B00100010 //1
-#define NUM_2    B10111001 //2
-#define NUM_3    B10101011 //3
-#define NUM_4    B01100011 //4
-#define NUM_5    B11001011 //5
-#define NUM_6    B11011011 //6
-#define NUM_7    B10100010 //7
-#define NUM_8    B11111011 //8
-#define NUM_9    B11101011 //9
-#define NUM_DOT  B00000100  //.
+#define NUM_0      B11111010 // 0
+#define NUM_1      B00100010 // 1
+#define NUM_2      B10111001 // 2
+#define NUM_3      B10101011 // 3
+#define NUM_4      B01100011 // 4
+#define NUM_5      B11001011 // 5
+#define NUM_6      B11011011 // 6
+#define NUM_7      B10100010 // 7
+#define NUM_8      B11111011 // 8
+#define NUM_9      B11101011 // 9
+#define NUM_BLANK  B00000100 // ' '
+#define NUM_DOT    B00000100 // .
 
 #define COMPARE_REG 64 // OCR2A when to interupt (datasheet: 18.11.4)
  
@@ -40,7 +41,7 @@ const byte digit_pins[DIGIT_COUNT] = {4,5,6,7};
 volatile int display_number; // the number currently being displayed.
 volatile byte current_digit = DIGIT_COUNT - 1; // The digit currently being shown in the multiplexing.
 
-const byte digit_map[11] =      //seven segment digits in bits
+const byte digit_map[12] =      //seven segment digits in bits
 {
   NUM_0,
   NUM_1,
@@ -52,6 +53,7 @@ const byte digit_map[11] =      //seven segment digits in bits
   NUM_7,
   NUM_8,
   NUM_9,
+  NUM_BLANK,
   NUM_DOT
 };
 
@@ -113,31 +115,37 @@ void updateDisplay()
   if (current_digit == DIGIT_COUNT) {
     current_digit = 0;
   }
-  
-  //char digits[DIGIT_COUNT];
-  //itoa(1234, digits, 10);
-  //sprintf(digits, "%04d", foo);
 
   int i;
-  // todo: make this neater
   switch (current_digit) {
     case 0:
-      i = display_number % 10000 / 1000;
+      if (display_number < 999) {
+        // Show a blank rather than a leading zero.
+        i = 10;
+      } else {
+        i = display_number % 10000 / 1000;
+      }
       break;
     case 1:
-      i = display_number % 1000 / 100;
+      if (display_number < 99) {
+        // Show a blank rather than a leading zero.
+        i = 10;
+      } else {
+        i = display_number % 1000 / 100;
+      }
       break;
     case 2:
-      i = display_number % 100 / 10;
+      if (display_number < 9) {
+        // Show a blank rather than a leading zero.
+        i = 10;
+      } else {
+        i = display_number % 100 / 10;
+      }
       break;
     case 3:
       i = display_number % 10;
       break;
   }
-  
-  
-  //int num = digits[current_digit]; 
-  //int i = num - 48;
 
   // Shift the byte out to the display.
   digitalWrite(latchPin, LOW);
