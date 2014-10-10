@@ -24,7 +24,7 @@
 #define NUM_7      B10100010 // 7
 #define NUM_8      B11111011 // 8
 #define NUM_9      B11101011 // 9
-#define NUM_BLANK  B00000100 // ' '
+#define NUM_BLANK  B00000000 // ' '
 #define NUM_DOT    B00000100 // .
 
 #define COMPARE_REG 64 // OCR2A when to interupt (datasheet: 18.11.4)
