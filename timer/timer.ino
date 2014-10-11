@@ -48,7 +48,7 @@ volatile int display_number; // the number currently being displayed.
 volatile byte current_digit = DIGIT_COUNT - 1; // The digit currently being shown in the multiplexing.
 
 byte start_time; // MINUTES 
-volatile byte dot_state; // Position & visibiliy of dot (left most bit indicates visibility - 11000, 10100, 10010, 10001)
+volatile byte dot_state = 0b00011000; // Position & visibiliy of dot (left most bit indicates visibility - 11000, 10100, 10010, 10001)
 
 const byte digit_map[12] =      //seven segment digits in bits
 {
@@ -88,9 +88,6 @@ void setup()
     // Set high to be OFF (common cathode)
     digitalWrite(digit_pins[i], HIGH);
   }
-
-  // Initialize the digits to '0000'
-  //sprintf(digits, "%04d", 0);
   
   multiplexInit();
   
@@ -142,8 +139,23 @@ void dotBlink()
  */
 void dotMove()
 {
-  // tmp
-  bitWrite(dot_state, 3, 1);
+  byte on = 0;
+  if (bitRead(dot_state, 4)) {
+    on = 1;
+    bitWrite(dot_state, 4, 0);
+  }
+  
+  // shift right
+  dot_state >>= 1;
+  // roll back to start
+  if (dot_state == 0) {
+    dot_state = 0b0001000;
+  }
+  
+  if (on) {
+    // put it back on
+    dot_state |= 0b0010000;
+  }
 }
 
 void updateDisplay()
@@ -160,18 +172,15 @@ void updateDisplay()
   int i;
   switch (current_digit) {
     case 0:
-      if (display_number < 999) {
+      if (display_number < 1000) {
         // Show a blank rather than a leading zero.
         i = 10;
       } else {
         i = display_number % 10000 / 1000;
       }
-      if (bitRead(dot_state, 3)) {
-        
-      }
       break;
     case 1:
-      if (display_number < 99) {
+      if (display_number < 100) {
         // Show a blank rather than a leading zero.
         i = 10;
       } else {
@@ -179,7 +188,7 @@ void updateDisplay()
       }
       break;
     case 2:
-      if (display_number < 9) {
+      if (display_number < 10) {
         // Show a blank rather than a leading zero.
         i = 10;
       } else {
@@ -196,34 +205,34 @@ void updateDisplay()
   // Handle the dot
   switch (current_digit) {
     case 0:
-      if (bitWrite(dot_state, 4, 0) && bitWrite(dot_state, 3, 0)) {
-        // shift in the dot
-        data |= (1 << NUM_DOT);
+      if (bitRead(dot_state, 4) && bitRead(dot_state, 3)) {
+        // Add the dot to the byte
+        data |= NUM_DOT;
       }
       break;
     case 1:
-      if (bitWrite(dot_state, 4, 0) && bitWrite(dot_state, 2, 0)) {
-        // shift in the dot
-        data |= (1 << NUM_DOT);
+      if (bitRead(dot_state, 4) && bitRead(dot_state, 2)) {
+        // Add the dot to the byte
+        data |= NUM_DOT;
       }
       break;
     case 2:
-      if (bitWrite(dot_state, 4, 0) && bitWrite(dot_state, 1, 0)) {
-        // shift in the dot
-        data |= (1 << NUM_DOT);
+      if (bitRead(dot_state, 4) && bitRead(dot_state, 1)) {
+        // Add the dot to the byte
+        data |= NUM_DOT;
       }
       break;
     case 3:
-      if (bitWrite(dot_state, 4, 0) && bitWrite(dot_state, 0, 0)) {
-        // shift in the dot
-        data |= (1 << NUM_DOT);
+      if (bitRead(dot_state, 4) && bitRead(dot_state, 0)) {
+        // Add the dot to the byte
+        data |= NUM_DOT;
       }
       break;
   }
 
   // Shift the byte out to the display.
   digitalWrite(latchPin, LOW);
-  shiftOut(dataPin, clockPin, MSBFIRST, digit_map[i]);
+  shiftOut(dataPin, clockPin, MSBFIRST, data);
   digitalWrite(latchPin, HIGH);
   
   // Turn on the current digit
