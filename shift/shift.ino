@@ -119,7 +119,7 @@ void updateDisplay()
   int i;
   switch (current_digit) {
     case 0:
-      if (display_number < 999) {
+      if (display_number < 1000) {
         // Show a blank rather than a leading zero.
         i = 10;
       } else {
@@ -127,7 +127,7 @@ void updateDisplay()
       }
       break;
     case 1:
-      if (display_number < 99) {
+      if (display_number < 100) {
         // Show a blank rather than a leading zero.
         i = 10;
       } else {
@@ -135,7 +135,7 @@ void updateDisplay()
       }
       break;
     case 2:
-      if (display_number < 9) {
+      if (display_number < 10) {
         // Show a blank rather than a leading zero.
         i = 10;
       } else {
