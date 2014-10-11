@@ -48,7 +48,7 @@ const byte digit_pins[DIGIT_COUNT] = {PIN_DIGIT_3, PIN_DIGIT_2, PIN_DIGIT_1, PIN
 volatile int display_number; // the number currently being displayed.
 volatile byte current_digit = DIGIT_COUNT - 1; // The digit currently being shown in the multiplexing.
 
-byte start_time; // MINUTES 
+int start_time; // MINUTES 
 volatile byte dot_state = 0b00011000; // Position & visibiliy of dot (left most bit indicates visibility - 11000, 10100, 10010, 10001)
 
 const byte digit_map[12] =      //seven segment digits in bits
@@ -120,21 +120,23 @@ void countdownStart()
 {
   timer_state = T_COUNTDOWN;
   // MINUTES
-  start_time = 1; // @todo: get this from an input
+  start_time = 10; // @todo: get this from an input
   display_number = start_time;
 }
 
 void countdownUpdate()
 {
-  if (display_number > 0) {
-    // Coutdown 1 minute per update.
-    --display_number;
-  }
-  
-  if (display_number == 0) {
-    timer_state = T_ALARM; 
-    // Countdown finished, no dot now.
-    bitWrite(dot_state, 4, 0);
+  if (timer_state == T_COUNTDOWN) {
+    if (display_number > 0) {
+      // Coutdown 1 minute per update.
+      --display_number;
+    }
+    
+    if (display_number == 0) {
+      timer_state = T_ALARM; 
+      // Countdown finished, no dot now.
+      bitWrite(dot_state, 4, 0);
+    }
   }
 }
 
@@ -159,37 +161,38 @@ void dotBlink()
  */
 void dotMove()
 {
-  byte on = 0;
-  if (bitRead(dot_state, 4)) {
-    on = 1;
-    bitWrite(dot_state, 4, 0);
-  }
-  
-  // shift right
-  dot_state >>= 1;
-  // roll back to start
-  if (dot_state == 0) {
-    dot_state = 0b0001000;
-  }
-  
-  if (on) {
-    // put it back on
-    dot_state |= 0b0010000;
+  if (timer_state == T_COUNTDOWN) {
+    byte on = 0;
+    if (bitRead(dot_state, 4)) {
+      on = 1;
+      bitWrite(dot_state, 4, 0);
+    }
+    
+    // shift right
+    dot_state >>= 1;
+    // roll back to start
+    if (dot_state == 0) {
+      dot_state = 0b0001000;
+    }
+    
+    if (on) {
+      // put it back on
+      dot_state |= 0b0010000;
+    }
   }
 }
 
 void updateDisplay()
 {
-  // Turn off the previous digit.
-  digitalWrite(digit_pins[current_digit], HIGH);
-  
-  byte data = 0;
+  byte previous_digit = current_digit;
   
   // Multiplexing, so get the next digit.
   current_digit++;
   if (current_digit == DIGIT_COUNT) {
     current_digit = 0;
   }
+
+  byte data = 0;
 
   if (timer_state == T_ALARM) {
     // All digits as dashes
@@ -257,6 +260,9 @@ void updateDisplay()
         break;
     }
   }
+  
+  // Turn off the previous digit.
+  digitalWrite(digit_pins[previous_digit], HIGH);
   
   // Shift the byte out to the display.
   digitalWrite(latchPin, LOW);
