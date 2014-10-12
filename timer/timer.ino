@@ -101,6 +101,7 @@ void setup()
   
   multiplexInit();
   
+  timer.setInterval(200, configure);
   
   timer.setInterval(500, dotBlink);
   // Move the dot every 15 seconds
@@ -108,7 +109,8 @@ void setup()
   // Countdown with a minute resolution.
   timer.setInterval(60000, countdownUpdate);
   
-  countdownStart(); // @todo: start the countdown on input
+  //countdownStart(); // @todo: start the countdown on input
+  configure();
 }
 
 void loop() 
@@ -116,11 +118,21 @@ void loop()
   timer.run();  
 }
 
+void configure()
+{
+  if (timer_state == T_CONFIG) {
+    int sensorValue = analogRead(A0);
+    start_time = sensorValue / 4;
+    display_number = start_time;
+    //Serial.println(start_time);
+  }
+}
+
 void countdownStart()
 {
   timer_state = T_COUNTDOWN;
   // MINUTES
-  start_time = 10; // @todo: get this from an input
+  //start_time = 10; // @todo: get this from an input
   display_number = start_time;
 }
 
