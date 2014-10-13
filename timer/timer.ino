@@ -109,7 +109,7 @@ ISR (TIMER2_COMPA_vect)
 
 void setup() 
 {
-  //Serial.begin(9600);
+  Serial.begin(9600);
 
   pinMode(latchPin, OUTPUT);
   pinMode(clockPin, OUTPUT);
@@ -142,32 +142,23 @@ void loop()
   timer.run();  
 }
 
-void wake()
-{
-  sleep_disable(); 
-  detachInterrupt(0);
-  MCUSR = 0; // clear the reset register 
-
-  digitalWrite(13, HIGH);
-  
-  power_timer0_enable();
-  power_timer1_enable();
-  power_timer2_enable();
-  //power_usart0_enable();
-  //power_twi_enable();
-  power_adc_enable();
-
-  //restartCountDownTimers();
-  countdownStart();
-}
-  
-
 void restartCountDownTimers()
 {
   timer.restartTimer(timer_dot_blink);
   timer.restartTimer(timer_dot_move);
   timer.restartTimer(timer_countdown);
   dot_state = 0b00011000;
+  
+  timer.enable(timer_dot_blink);
+  timer.enable(timer_dot_move);
+  timer.enable(timer_countdown);
+}
+
+void timersDisable()
+{
+  timer.disable(timer_dot_blink);
+  timer.disable(timer_dot_move);
+  timer.disable(timer_countdown);
 }
 
 void inputTime()
@@ -219,7 +210,7 @@ void inputTime()
   }
   
   
-  //Serial.println(display_number);
+  Serial.println(display_number);
 
 }
 
@@ -415,6 +406,8 @@ void multiplexInit(void)
 
 void goToSleep()
 {
+  timer_state == T_OFF;
+  timersDisable();
 
   // Turn off the display - @todo: output enable on shift register to turn off display
   for (int i = 0; i < DIGIT_COUNT; i++) {
@@ -458,3 +451,34 @@ void goToSleep()
   power_adc_enable();
 */
 }
+
+void wake()
+{
+  sleep_disable(); 
+  detachInterrupt(0); //@todo: interrupt is not enough - need a check/delay
+  MCUSR = 0; // clear the reset register 
+
+  digitalWrite(13, HIGH);
+ 
+  power_adc_enable();
+  power_timer0_enable();
+  power_timer1_enable();
+  power_timer2_enable();
+  power_usart0_enable();
+  //power_twi_enable();
+  /*
+  delay(100);
+  int val = analogRead(PIN_TIME_INPUT);
+  if (val > INPUT_NONE_MIN) {
+     goToSleep();
+     //display_number = val;
+  } else {
+    restartCountDownTimers();
+    countdownStart();
+  }
+  */
+  
+  restartCountDownTimers();
+  countdownStart();
+}
+
