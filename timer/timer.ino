@@ -8,6 +8,13 @@
 
  */
  
+#include <avr/wdt.h>
+#include <avr/sleep.h>    // Sleep Modes
+#include <avr/power.h>    // Power management
+#include "SimpleTimer.h"
+ 
+#define START_TIME 30 // Default start at 30 minutes
+ 
 // Inputs from the potentiometer for setting the time
 // Bands have buffers between them.
 #define INPUT_LEFT_MED_MIN    0
@@ -21,7 +28,6 @@
 #define INPUT_RIGHT_MED_MIN   950
 #define INPUT_RIGHT_MED_MAX   1025
  
-#include "SimpleTimer.h"
 
 #define PIN_LATCH    8  // ST_CP of 74HC595
 #define PIN_CLOCK    12 // SH_CP of 74HC595
@@ -62,7 +68,6 @@ const byte digit_pins[DIGIT_COUNT] = {PIN_DIGIT_3, PIN_DIGIT_2, PIN_DIGIT_1, PIN
 volatile int display_number; // the number currently being displayed.
 volatile byte current_digit = DIGIT_COUNT - 1; // The digit currently being shown in the multiplexing.
 
-byte setting_time; // Whether the time is being set.
 //int start_time; // MINUTES 
 volatile byte dot_state = 0b00011000; // Position & visibiliy of dot (left most bit indicates visibility - 11000, 10100, 10010, 10001)
 
@@ -86,12 +91,15 @@ const byte digit_map[12] =      //seven segment digits in bits
 enum timer_states {
   T_COUNTDOWN, 
   T_ALARM, 
-  T_CONFIG,
+  T_SETTING,
   T_OFF
 };
-timer_states timer_state = T_CONFIG; // Turn on in config mode
+timer_states timer_state = T_COUNTDOWN; // Just start counting
 
 SimpleTimer timer;
+int timer_dot_blink;
+int timer_dot_move;
+int timer_countdown;
 
 //timer 2 compare ISR
 ISR (TIMER2_COMPA_vect)
@@ -101,12 +109,13 @@ ISR (TIMER2_COMPA_vect)
 
 void setup() 
 {
-  Serial.begin(9600);
-  
-  
+  //Serial.begin(9600);
+
   pinMode(latchPin, OUTPUT);
   pinMode(clockPin, OUTPUT);
   pinMode(dataPin, OUTPUT);
+  
+  pinMode(13, OUTPUT); // TMP
   
   for (int i = 0; i < DIGIT_COUNT; i++) {
     pinMode(digit_pins[i], OUTPUT);
@@ -118,13 +127,13 @@ void setup()
   
   timer.setInterval(250, inputTime);
   
-  timer.setInterval(500, dotBlink);
+  timer_dot_blink = timer.setInterval(500, dotBlink);
   // Move the dot every 15 seconds
-  timer.setInterval(15000, dotMove);
+  timer_dot_move = timer.setInterval(15000, dotMove);
   // Countdown with a minute resolution.
-  timer.setInterval(60000, countdownUpdate);
+  timer_countdown = timer.setInterval(60000, countdownUpdate);
   
-  countdownStart(); // @todo: start the countdown on input
+  countdownStart();
 
 }
 
@@ -133,9 +142,45 @@ void loop()
   timer.run();  
 }
 
+void wake()
+{
+  sleep_disable(); 
+  detachInterrupt(0);
+  MCUSR = 0; // clear the reset register 
+
+  digitalWrite(13, HIGH);
+  
+  power_timer0_enable();
+  power_timer1_enable();
+  power_timer2_enable();
+  //power_usart0_enable();
+  //power_twi_enable();
+  power_adc_enable();
+
+  //restartCountDownTimers();
+  countdownStart();
+}
+  
+
+void restartCountDownTimers()
+{
+  timer.restartTimer(timer_dot_blink);
+  timer.restartTimer(timer_dot_move);
+  timer.restartTimer(timer_countdown);
+  dot_state = 0b00011000;
+}
+
 void inputTime()
 {
   int val = analogRead(PIN_TIME_INPUT);
+  
+  if (timer_state == T_OFF) {
+    // Waking from sleep
+    display_number = START_TIME;
+    restartCountDownTimers();
+    timer_state = T_COUNTDOWN;
+    return;
+  }
 
   if (INPUT_LEFT_MED_MIN <= val && val < INPUT_LEFT_MED_MAX) {
     //Serial.print(val); Serial.println(" LEFT MED");
@@ -144,20 +189,33 @@ void inputTime()
     } else {
       display_number = display_number - 10;
     }
+    timer_state = T_SETTING;
   } else if (INPUT_LEFT_SMALL_MIN < val && val < INPUT_LEFT_SMALL_MAX) {
     //Serial.print(val); Serial.println(" LEFT SMALL");
     if (display_number > 0) {
       --display_number;
     }
+    timer_state = T_SETTING;
   } else if (INPUT_NONE_MIN < val && val < INPUT_NONE_MAX) {
     //Serial.print(val); Serial.println(" OFF");
-    
+    if (timer_state == T_SETTING) {
+      if (display_number == 0) {
+        // Just "turn off"
+        goToSleep(); 
+      } else {
+        // Restart the countdown
+        restartCountDownTimers();
+        timer_state = T_COUNTDOWN;
+      }
+    }
   } else if (INPUT_RIGHT_SMALL_MIN < val && val < INPUT_RIGHT_SMALL_MAX) {
     //Serial.print(val); Serial.println(" RIGHT SMALL");
     ++display_number;
+    timer_state = T_SETTING;
   } else if (INPUT_RIGHT_MED_MIN < val && val < INPUT_RIGHT_MED_MAX) {
     //Serial.print(val); Serial.println(" RIGHT MED");
     display_number = display_number + 10;
+    timer_state = T_SETTING;
   }
   
   
@@ -169,7 +227,7 @@ void countdownStart()
 {
   timer_state = T_COUNTDOWN;
   // MINUTES 
-  display_number = 10; // @todo: get this from an input
+  display_number = START_TIME;
 }
 
 void countdownUpdate()
@@ -184,6 +242,9 @@ void countdownUpdate()
       timer_state = T_ALARM; 
       // Countdown finished, no dot now.
       bitWrite(dot_state, 4, 0);
+      
+      // Sleep soon
+      timer.setTimeout(10000, goToSleep);
     }
   }
 }
@@ -201,6 +262,9 @@ void dotBlink()
       // Currently off, so turn it on
       bitWrite(dot_state, 4, 1);
     }
+  } else {
+    // dot off
+    bitWrite(dot_state, 4, 0);
   }
 }
 
@@ -349,3 +413,48 @@ void multiplexInit(void)
   
 }
 
+void goToSleep()
+{
+
+  // Turn off the display - @todo: output enable on shift register to turn off display
+  for (int i = 0; i < DIGIT_COUNT; i++) {
+    //pinMode(digit_pins[i], OUTPUT);
+    // Set high to be OFF (common cathode)
+    digitalWrite(digit_pins[i], HIGH); // @todo is high using power here?
+  }
+  
+  digitalWrite(13, LOW);
+  //cli();
+
+  set_sleep_mode(SLEEP_MODE_PWR_DOWN);
+  power_all_disable();
+
+  sleep_enable();
+  //sei();
+  
+  // Do not interrupt before we go to sleep, or the
+  // ISR will detach interrupts and we won't wake.
+  noInterrupts();
+  
+  // will be called when pin D2 goes low  
+  attachInterrupt(0, wake, LOW);
+  
+  // turn off brown-out enable in software
+  //MCUCR = bit (BODS) | bit (BODSE);  // turn on brown-out enable select
+  //MCUCR = bit (BODS);        // this must be done within 4 clock cycles of above
+  interrupts();
+  sleep_cpu();              // sleep within 3 clock cycles of brown out
+
+/*                      
+  sleep_disable();  
+  MCUSR = 0; // clear the reset register 
+  
+  
+  power_timer0_enable();
+  //power_timer1_enable();
+  //power_timer2_enable();
+  //power_usart0_enable();
+  //power_twi_enable();
+  power_adc_enable();
+*/
+}
