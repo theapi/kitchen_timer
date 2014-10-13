@@ -8,6 +8,19 @@
 
  */
  
+// Inputs from the potentiometer for setting the time
+// Bands have buffers between them.
+#define INPUT_LEFT_MED_MIN    0
+#define INPUT_LEFT_MED_MAX    100
+#define INPUT_LEFT_SMALL_MIN  150
+#define INPUT_LEFT_SMALL_MAX  250
+#define INPUT_NONE_MIN        300
+#define INPUT_NONE_MAX        400 
+#define INPUT_RIGHT_SMALL_MIN 450
+#define INPUT_RIGHT_SMALL_MAX 550
+#define INPUT_RIGHT_MED_MIN   600
+#define INPUT_RIGHT_MED_MAX   750
+ 
 #include "SimpleTimer.h"
 
 #define PIN_LATCH    8  // ST_CP of 74HC595
@@ -17,6 +30,7 @@
 #define PIN_DIGIT_1  6  // Multiplex pin for the digit
 #define PIN_DIGIT_2  5  // Multiplex pin for the digit
 #define PIN_DIGIT_3  4  // Multiplex pin for the digit
+#define PIN_TIME_INPUT A0 
 
 #define DIGIT_COUNT 4 // 4 digit display
  
@@ -48,7 +62,7 @@ const byte digit_pins[DIGIT_COUNT] = {PIN_DIGIT_3, PIN_DIGIT_2, PIN_DIGIT_1, PIN
 volatile int display_number; // the number currently being displayed.
 volatile byte current_digit = DIGIT_COUNT - 1; // The digit currently being shown in the multiplexing.
 
-int start_time; // MINUTES 
+//int start_time; // MINUTES 
 volatile byte dot_state = 0b00011000; // Position & visibiliy of dot (left most bit indicates visibility - 11000, 10100, 10010, 10001)
 
 const byte digit_map[12] =      //seven segment digits in bits
@@ -101,7 +115,7 @@ void setup()
   
   multiplexInit();
   
-  timer.setInterval(200, configure);
+  timer.setInterval(150, inputTime);
   
   timer.setInterval(500, dotBlink);
   // Move the dot every 15 seconds
@@ -109,8 +123,8 @@ void setup()
   // Countdown with a minute resolution.
   timer.setInterval(60000, countdownUpdate);
   
-  //countdownStart(); // @todo: start the countdown on input
-  configure();
+  countdownStart(); // @todo: start the countdown on input
+
 }
 
 void loop() 
@@ -118,22 +132,43 @@ void loop()
   timer.run();  
 }
 
-void configure()
+void inputTime()
 {
-  if (timer_state == T_CONFIG) {
-    int sensorValue = analogRead(A0);
-    start_time = sensorValue / 4;
-    display_number = start_time;
-    //Serial.println(start_time);
+  int val = analogRead(PIN_TIME_INPUT);
+
+  if (INPUT_LEFT_MED_MIN <= val && val < INPUT_LEFT_MED_MAX) {
+    //Serial.print(val); Serial.println(" LEFT MED");
+    if (display_number <= 10) {
+      display_number = 0; 
+    } else {
+      display_number = display_number - 10;
+    }
+  } else if (INPUT_LEFT_SMALL_MIN < val && val < INPUT_LEFT_SMALL_MAX) {
+    //Serial.print(val); Serial.println(" LEFT SMALL");
+    if (display_number > 0) {
+      --display_number;
+    }
+  } else if (INPUT_NONE_MIN < val && val < INPUT_NONE_MAX) {
+    //Serial.print(val); Serial.println(" OFF");
+    
+  } else if (INPUT_RIGHT_SMALL_MIN < val && val < INPUT_RIGHT_SMALL_MAX) {
+    //Serial.print(val); Serial.println(" RIGHT SMALL");
+    ++display_number;
+  } else if (INPUT_RIGHT_MED_MIN < val && val < INPUT_RIGHT_MED_MAX) {
+    //Serial.print(val); Serial.println(" RIGHT MED");
+    display_number = display_number + 10;
   }
+  
+  
+  Serial.println(display_number);
+
 }
 
 void countdownStart()
 {
   timer_state = T_COUNTDOWN;
-  // MINUTES
-  //start_time = 10; // @todo: get this from an input
-  display_number = start_time;
+  // MINUTES 
+  display_number = 10; // @todo: get this from an input
 }
 
 void countdownUpdate()
