@@ -13,13 +13,13 @@
 #define INPUT_LEFT_MED_MIN    0
 #define INPUT_LEFT_MED_MAX    100
 #define INPUT_LEFT_SMALL_MIN  150
-#define INPUT_LEFT_SMALL_MAX  250
-#define INPUT_NONE_MIN        300
-#define INPUT_NONE_MAX        400 
-#define INPUT_RIGHT_SMALL_MIN 450
-#define INPUT_RIGHT_SMALL_MAX 550
-#define INPUT_RIGHT_MED_MIN   600
-#define INPUT_RIGHT_MED_MAX   750
+#define INPUT_LEFT_SMALL_MAX  450
+#define INPUT_NONE_MIN        462
+#define INPUT_NONE_MAX        562 
+#define INPUT_RIGHT_SMALL_MIN 600
+#define INPUT_RIGHT_SMALL_MAX 900
+#define INPUT_RIGHT_MED_MIN   950
+#define INPUT_RIGHT_MED_MAX   1025
  
 #include "SimpleTimer.h"
 
@@ -62,6 +62,7 @@ const byte digit_pins[DIGIT_COUNT] = {PIN_DIGIT_3, PIN_DIGIT_2, PIN_DIGIT_1, PIN
 volatile int display_number; // the number currently being displayed.
 volatile byte current_digit = DIGIT_COUNT - 1; // The digit currently being shown in the multiplexing.
 
+byte setting_time; // Whether the time is being set.
 //int start_time; // MINUTES 
 volatile byte dot_state = 0b00011000; // Position & visibiliy of dot (left most bit indicates visibility - 11000, 10100, 10010, 10001)
 
@@ -115,7 +116,7 @@ void setup()
   
   multiplexInit();
   
-  timer.setInterval(150, inputTime);
+  timer.setInterval(250, inputTime);
   
   timer.setInterval(500, dotBlink);
   // Move the dot every 15 seconds
@@ -160,7 +161,7 @@ void inputTime()
   }
   
   
-  Serial.println(display_number);
+  //Serial.println(display_number);
 
 }
 
