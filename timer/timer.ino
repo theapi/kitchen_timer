@@ -100,6 +100,8 @@ SimpleTimer timer;
 int timer_dot_blink;
 int timer_dot_move;
 int timer_countdown;
+int zero_delay = 1000; // How long to wait with a setting of zero befor sleeping, allows sweeping past zero.
+unsigned long zero_prev = 0;
 
 //timer 2 compare ISR
 ISR (TIMER2_COMPA_vect)
@@ -164,14 +166,6 @@ void timersDisable()
 void inputTime()
 {
   int val = analogRead(PIN_TIME_INPUT);
-  
-  if (timer_state == T_OFF) {
-    // Waking from sleep
-    display_number = START_TIME;
-    restartCountDownTimers();
-    timer_state = T_COUNTDOWN;
-    return;
-  }
 
   if (INPUT_LEFT_MED_MIN <= val && val < INPUT_LEFT_MED_MAX) {
     //Serial.print(val); Serial.println(" LEFT MED");
@@ -191,8 +185,18 @@ void inputTime()
     //Serial.print(val); Serial.println(" OFF");
     if (timer_state == T_SETTING) {
       if (display_number == 0) {
-        // Just "turn off"
-        goToSleep(); 
+        
+        // Allow a sweep past zero
+        unsigned long now = millis();
+        if (zero_prev == 0) {
+          zero_prev = now; 
+        }
+        if (now - zero_prev > zero_delay) {
+          zero_prev = 0;
+          // Just "turn off"
+          goToSleep(); 
+        }
+        
       } else {
         // Restart the countdown
         restartCountDownTimers();
@@ -209,7 +213,8 @@ void inputTime()
     timer_state = T_SETTING;
   }
   
-  
+  Serial.print(val);
+  Serial.print(" ");
   Serial.println(display_number);
 
 }
@@ -430,32 +435,20 @@ void goToSleep()
   noInterrupts();
   
   // will be called when pin D2 goes low  
-  attachInterrupt(0, wake, LOW);
+  // @todo: voltage divider to change pot at center to no be on the edge of low or high
+  attachInterrupt(0, wake, HIGH);
   
   // turn off brown-out enable in software
   //MCUCR = bit (BODS) | bit (BODSE);  // turn on brown-out enable select
   //MCUCR = bit (BODS);        // this must be done within 4 clock cycles of above
   interrupts();
   sleep_cpu();              // sleep within 3 clock cycles of brown out
-
-/*                      
-  sleep_disable();  
-  MCUSR = 0; // clear the reset register 
-  
-  
-  power_timer0_enable();
-  //power_timer1_enable();
-  //power_timer2_enable();
-  //power_usart0_enable();
-  //power_twi_enable();
-  power_adc_enable();
-*/
 }
 
 void wake()
 {
   sleep_disable(); 
-  detachInterrupt(0); //@todo: interrupt is not enough - need a check/delay
+  detachInterrupt(0); 
   MCUSR = 0; // clear the reset register 
 
   digitalWrite(13, HIGH);
@@ -466,17 +459,6 @@ void wake()
   power_timer2_enable();
   power_usart0_enable();
   //power_twi_enable();
-  /*
-  delay(100);
-  int val = analogRead(PIN_TIME_INPUT);
-  if (val > INPUT_NONE_MIN) {
-     goToSleep();
-     //display_number = val;
-  } else {
-    restartCountDownTimers();
-    countdownStart();
-  }
-  */
   
   restartCountDownTimers();
   countdownStart();
