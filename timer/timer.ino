@@ -13,7 +13,8 @@
 #include <avr/power.h>    // Power management
 #include "SimpleTimer.h"
  
-#define START_TIME 30 // Default start at 30 minutes
+#define START_TIME 5 // Default start at 30 minutes
+#define ALARM_SECONDS 1; // How long for the alarm
  
 // Inputs from the potentiometer for setting the time
 // Bands have buffers between them.
@@ -102,6 +103,7 @@ int timer_dot_move;
 int timer_countdown;
 int zero_delay = 1000; // How long to wait with a setting of zero befor sleeping, allows sweeping past zero.
 unsigned long zero_prev = 0;
+int alarm_count = ALARM_SECONDS; // How many calls to everySecond() to sound the alarm
 
 //timer 2 compare ISR
 ISR (TIMER2_COMPA_vect)
@@ -112,6 +114,8 @@ ISR (TIMER2_COMPA_vect)
 void setup() 
 {
   Serial.begin(9600);
+
+  pinMode(2, INPUT); // External interrupt
 
   pinMode(latchPin, OUTPUT);
   pinMode(clockPin, OUTPUT);
@@ -129,6 +133,8 @@ void setup()
   
   timer.setInterval(250, inputTime);
   
+  timer.setInterval(1000, everySecond);
+  
   timer_dot_blink = timer.setInterval(500, dotBlink);
   // Move the dot every 15 seconds
   timer_dot_move = timer.setInterval(15000, dotMove);
@@ -136,12 +142,73 @@ void setup()
   timer_countdown = timer.setInterval(60000, countdownUpdate);
   
   countdownStart();
+  
 
 }
 
 void loop() 
 {
   timer.run();  
+  
+  /*
+  Serial.println("sleep");
+  Serial.flush();
+  delay(2000);
+  goToSleep();
+  Serial.println("WAKE UP");
+  Serial.flush();
+  */
+}
+
+
+void everySecond()
+{
+  switch(timer_state) {
+    case T_COUNTDOWN:
+      break;
+    
+    case T_ALARM:
+      if (alarm_count > 0) {
+        --alarm_count;
+      } else {
+        goToSleep();
+        // Wake up, and start a new count down.
+        alarm_count = ALARM_SECONDS;
+        countdownStart();
+      }
+      break;
+      
+      
+    case T_SETTING:
+      break;
+      
+    case T_OFF:
+      break;
+  } 
+}
+
+void countdownStart()
+{
+  timer_state = T_COUNTDOWN;
+  // MINUTES 
+  display_number = START_TIME; Serial.println(display_number);
+  restartCountDownTimers();
+}
+
+void countdownUpdate()
+{
+  if (timer_state == T_COUNTDOWN) {
+    if (display_number > 0) {
+      // Coutdown 1 minute per update.
+      --display_number;
+    }
+    
+    if (display_number == 0) {
+      timer_state = T_ALARM; 
+      // Countdown finished, no dot now.
+      bitWrite(dot_state, 4, 0);
+    }
+  }
 }
 
 void restartCountDownTimers()
@@ -195,6 +262,8 @@ void inputTime()
           zero_prev = 0;
           // Just "turn off"
           goToSleep(); 
+          // Wake up, and start a new count down.
+          countdownStart();
         }
         
       } else {
@@ -215,34 +284,10 @@ void inputTime()
   
   Serial.print(val);
   Serial.print(" ");
+  Serial.print(digitalRead(2));
+  Serial.print(" ");
   Serial.println(display_number);
-
-}
-
-void countdownStart()
-{
-  timer_state = T_COUNTDOWN;
-  // MINUTES 
-  display_number = START_TIME;
-}
-
-void countdownUpdate()
-{
-  if (timer_state == T_COUNTDOWN) {
-    if (display_number > 0) {
-      // Coutdown 1 minute per update.
-      --display_number;
-    }
-    
-    if (display_number == 0) {
-      timer_state = T_ALARM; 
-      // Countdown finished, no dot now.
-      bitWrite(dot_state, 4, 0);
-      
-      // Sleep soon
-      timer.setTimeout(10000, goToSleep);
-    }
-  }
+  Serial.flush();
 }
 
 /**
@@ -422,6 +467,8 @@ void goToSleep()
   }
   
   digitalWrite(13, LOW);
+  // will be called when pin D2 goes high
+  attachInterrupt(0, wake, HIGH);
   //cli();
 
   set_sleep_mode(SLEEP_MODE_PWR_DOWN);
@@ -432,35 +479,35 @@ void goToSleep()
   
   // Do not interrupt before we go to sleep, or the
   // ISR will detach interrupts and we won't wake.
-  noInterrupts();
+  //noInterrupts();
   
-  // will be called when pin D2 goes low  
-  // @todo: voltage divider to change pot at center to no be on the edge of low or high
-  attachInterrupt(0, wake, HIGH);
+  
   
   // turn off brown-out enable in software
   //MCUCR = bit (BODS) | bit (BODSE);  // turn on brown-out enable select
   //MCUCR = bit (BODS);        // this must be done within 4 clock cycles of above
-  interrupts();
+  //interrupts();
   sleep_cpu();              // sleep within 3 clock cycles of brown out
-}
-
-void wake()
-{
+  
   sleep_disable(); 
   detachInterrupt(0); 
-  MCUSR = 0; // clear the reset register 
+  //MCUSR = 0; // clear the reset register 
 
   digitalWrite(13, HIGH);
  
+ /*
   power_adc_enable();
   power_timer0_enable();
   power_timer1_enable();
   power_timer2_enable();
   power_usart0_enable();
   //power_twi_enable();
-  
-  restartCountDownTimers();
-  countdownStart();
+  */
+  power_all_enable();
+}
+
+void wake()
+{
+  // Just wake up. Do nothing else here as it is an ISR.
 }
 
