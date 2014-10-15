@@ -14,7 +14,9 @@
 #include "SimpleTimer.h"
  
 #define START_TIME 5 // Default start at 30 minutes
-#define ALARM_SECONDS 1; // How long for the alarm
+//#define ALARM_SECONDS 1; // How long for the alarm
+#define ALARM_SOUND_SECONDS 1 // How long for the sound alarm
+#define ALARM_LIGHT_SECONDS 1 // How long for the sound alarm
  
 // Inputs from the potentiometer for setting the time
 // Bands have buffers between them.
@@ -103,7 +105,8 @@ int timer_dot_move;
 int timer_countdown;
 int zero_delay = 1000; // How long to wait with a setting of zero befor sleeping, allows sweeping past zero.
 unsigned long zero_prev = 0;
-int alarm_count = ALARM_SECONDS; // How many calls to everySecond() to sound the alarm
+//int alarm_count = ALARM_SECONDS; // How many calls to everySecond() to sound the alarm
+unsigned long alarm_start; // When the alarm started
 
 //timer 2 compare ISR
 ISR (TIMER2_COMPA_vect)
@@ -133,7 +136,7 @@ void setup()
   
   timer.setInterval(250, inputTime);
   
-  timer.setInterval(1000, everySecond);
+  //timer.setInterval(1000, everySecond);
   
   timer_dot_blink = timer.setInterval(500, dotBlink);
   // Move the dot every 15 seconds
@@ -143,12 +146,13 @@ void setup()
   
   countdownStart();
   
-
 }
 
 void loop() 
 {
   timer.run();  
+  
+  stateRun();
   
   /*
   Serial.println("sleep");
@@ -160,21 +164,39 @@ void loop()
   */
 }
 
-
-void everySecond()
+void stateRun()
 {
   switch(timer_state) {
     case T_COUNTDOWN:
       break;
     
     case T_ALARM:
-      if (alarm_count > 0) {
-        --alarm_count;
+      if (alarm_start == 0) {
+        // Start the alarm
+        alarm_start = millis();
       } else {
-        goToSleep();
-        // Wake up, and start a new count down.
-        alarm_count = ALARM_SECONDS;
-        countdownStart();
+        // Handle the running alarm
+        byte finished_sound = 0;
+        byte finished_light = 0;
+        unsigned long now = millis();
+        if (now - alarm_start > ALARM_SOUND_SECONDS) {
+          // stop the sound
+          finished_sound = 1;
+          
+        }
+        if (now - alarm_start > ALARM_LIGHT_SECONDS) {
+          // stop the light
+          finished_light = 1;
+          
+        }
+        
+        if (finished_sound && finished_light) {
+          goToSleep();
+          // Wake up, and start a new count down.
+          alarm_start = 0;
+          countdownStart();
+        }
+        
       }
       break;
       
@@ -191,7 +213,8 @@ void countdownStart()
 {
   timer_state = T_COUNTDOWN;
   // MINUTES 
-  display_number = START_TIME; Serial.println(display_number);
+  display_number = START_TIME; 
+  Serial.println(display_number);
   restartCountDownTimers();
 }
 
