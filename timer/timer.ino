@@ -14,23 +14,25 @@
 #include "SimpleTimer.h"
  
 #define START_TIME 5 // Default start at 30 minutes
-//#define ALARM_SECONDS 1; // How long for the alarm
-#define ALARM_SOUND_SECONDS 1 // How long for the sound alarm
-#define ALARM_LIGHT_SECONDS 1 // How long for the sound alarm
+
+#define ALARM_SOUND_SECONDS 1 * 1000 // How long for the sound alarm
+#define ALARM_LIGHT_SECONDS 1 * 1000 // How long for the sound alarm
  
 // Inputs from the potentiometer for setting the time
-// Bands have buffers between them.
-#define INPUT_LEFT_MED_MIN    0
-#define INPUT_LEFT_MED_MAX    100
-#define INPUT_LEFT_SMALL_MIN  150
-#define INPUT_LEFT_SMALL_MAX  450
-#define INPUT_NONE_MIN        462
-#define INPUT_NONE_MAX        562 
-#define INPUT_RIGHT_SMALL_MIN 600
-#define INPUT_RIGHT_SMALL_MAX 900
-#define INPUT_RIGHT_MED_MIN   950
-#define INPUT_RIGHT_MED_MAX   1025
- 
+#define INPUT_LEFT_FAST_MIN   0
+#define INPUT_LEFT_FAST_MAX   149
+#define INPUT_LEFT_MED_MIN    150
+#define INPUT_LEFT_MED_MAX    299
+#define INPUT_LEFT_SMALL_MIN  300
+#define INPUT_LEFT_SMALL_MAX  399
+#define INPUT_NONE_MIN        400
+#define INPUT_NONE_MAX        600 
+#define INPUT_RIGHT_SMALL_MIN 601
+#define INPUT_RIGHT_SMALL_MAX 700
+#define INPUT_RIGHT_MED_MIN   701
+#define INPUT_RIGHT_MED_MAX   850
+#define INPUT_RIGHT_FAST_MIN  851
+#define INPUT_RIGHT_FAST_MAX  1025
 
 #define PIN_LATCH    8  // ST_CP of 74HC595
 #define PIN_CLOCK    12 // SH_CP of 74HC595
@@ -99,6 +101,18 @@ enum timer_states {
 };
 timer_states timer_state = T_COUNTDOWN; // Just start counting
 
+// Time setting states
+enum setting_states {
+  S_NONE,
+  S_REDUCE_FAST,
+  S_REDUCE_MED,
+  S_REDUCE_SLOW,
+  S_INCREASE_SLOW,
+  S_INCREASE_MED,
+  S_INCREASE_FAST,
+};
+setting_states setting_state = S_NONE;
+
 SimpleTimer timer;
 int timer_dot_blink;
 int timer_dot_move;
@@ -107,6 +121,7 @@ int zero_delay = 1000; // How long to wait with a setting of zero befor sleeping
 unsigned long zero_prev = 0;
 //int alarm_count = ALARM_SECONDS; // How many calls to everySecond() to sound the alarm
 unsigned long alarm_start; // When the alarm started
+unsigned long setting_update_last; // When the display number was last changed
 
 //timer 2 compare ISR
 ISR (TIMER2_COMPA_vect)
@@ -134,7 +149,7 @@ void setup()
   
   multiplexInit();
   
-  timer.setInterval(250, inputTime);
+  timer.setInterval(200, inputTime);
   
   //timer.setInterval(1000, everySecond);
   
@@ -166,6 +181,73 @@ void loop()
 
 void stateRun()
 {
+  unsigned long now;
+  
+  if (setting_state == S_NONE) {
+    setting_update_last = 0;
+  } else {
+    now = millis();
+  }
+  
+  switch(setting_state) {
+    case S_REDUCE_FAST:
+      if (now - 100 > setting_update_last) {
+        setting_update_last = now;
+        if (display_number > 0) {
+          --display_number; 
+        }
+      }
+      break;
+      
+    case S_REDUCE_MED:
+      if (now - 250 > setting_update_last) {
+        setting_update_last = now;
+        if (display_number > 0) {
+          --display_number; 
+        }
+      }
+      break;
+      
+    case S_REDUCE_SLOW:
+      if (now - 500 > setting_update_last) {
+        setting_update_last = now;
+        if (display_number > 0) {
+          --display_number; 
+        }
+      }
+      break;
+      
+    case S_NONE:
+      break;
+      
+    case S_INCREASE_SLOW:
+      if (now - 500 > setting_update_last) {
+        setting_update_last = now;
+        if (display_number < 9999) {
+          ++display_number; 
+        }
+      }
+      break;
+      
+    case S_INCREASE_MED:
+      if (now - 250 > setting_update_last) {
+        setting_update_last = now;
+        if (display_number < 9999) {
+          ++display_number; 
+        }
+      }
+      break;
+      
+    case S_INCREASE_FAST:
+      if (now - 100 > setting_update_last) {
+        setting_update_last = now;
+        if (display_number < 9999) {
+          ++display_number; 
+        }
+      }
+      break;
+  }
+  
   switch(timer_state) {
     case T_COUNTDOWN:
       break;
@@ -178,7 +260,7 @@ void stateRun()
         // Handle the running alarm
         byte finished_sound = 0;
         byte finished_light = 0;
-        unsigned long now = millis();
+        now = millis();
         if (now - alarm_start > ALARM_SOUND_SECONDS) {
           // stop the sound
           finished_sound = 1;
@@ -257,22 +339,17 @@ void inputTime()
 {
   int val = analogRead(PIN_TIME_INPUT);
 
-  if (INPUT_LEFT_MED_MIN <= val && val < INPUT_LEFT_MED_MAX) {
-    //Serial.print(val); Serial.println(" LEFT MED");
-    if (display_number <= 10) {
-      display_number = 0; 
-    } else {
-      display_number = display_number - 10;
-    }
+  if (INPUT_LEFT_FAST_MIN <= val && val < INPUT_LEFT_FAST_MAX) {
     timer_state = T_SETTING;
+    setting_state = S_REDUCE_FAST;
+  } else if (INPUT_LEFT_MED_MIN <= val && val < INPUT_LEFT_MED_MAX) {
+    timer_state = T_SETTING;
+    setting_state = S_REDUCE_MED;
   } else if (INPUT_LEFT_SMALL_MIN < val && val < INPUT_LEFT_SMALL_MAX) {
-    //Serial.print(val); Serial.println(" LEFT SMALL");
-    if (display_number > 0) {
-      --display_number;
-    }
     timer_state = T_SETTING;
+    setting_state = S_REDUCE_SLOW;
   } else if (INPUT_NONE_MIN < val && val < INPUT_NONE_MAX) {
-    //Serial.print(val); Serial.println(" OFF");
+    setting_state = S_NONE;
     if (timer_state == T_SETTING) {
       if (display_number == 0) {
         
@@ -296,21 +373,21 @@ void inputTime()
       }
     }
   } else if (INPUT_RIGHT_SMALL_MIN < val && val < INPUT_RIGHT_SMALL_MAX) {
-    //Serial.print(val); Serial.println(" RIGHT SMALL");
-    ++display_number;
     timer_state = T_SETTING;
+    setting_state = S_INCREASE_SLOW;
   } else if (INPUT_RIGHT_MED_MIN < val && val < INPUT_RIGHT_MED_MAX) {
-    //Serial.print(val); Serial.println(" RIGHT MED");
-    display_number = display_number + 10;
     timer_state = T_SETTING;
+    setting_state = S_INCREASE_MED;
+  } else if (INPUT_RIGHT_FAST_MIN < val && val < INPUT_RIGHT_FAST_MAX) {
+    timer_state = T_SETTING;
+    setting_state = S_INCREASE_FAST;
   }
   
   Serial.print(val);
   Serial.print(" ");
-  Serial.print(digitalRead(2));
-  Serial.print(" ");
-  Serial.println(display_number);
+  Serial.println(setting_state);
   Serial.flush();
+  
 }
 
 /**
