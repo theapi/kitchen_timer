@@ -149,6 +149,7 @@ void setup()
   
   multiplexInit();
   
+  /*
   timer.setInterval(200, inputTime);
   
   //timer.setInterval(1000, everySecond);
@@ -160,14 +161,16 @@ void setup()
   timer_countdown = timer.setInterval(60000, countdownUpdate);
   
   countdownStart();
+  */
   
+  timer.setInterval(200, experiment);
 }
 
 void loop() 
 {
   timer.run();  
   
-  stateRun();
+  //stateRun();
   
   /*
   Serial.println("sleep");
@@ -177,6 +180,11 @@ void loop()
   Serial.println("WAKE UP");
   Serial.flush();
   */
+}
+
+void experiment()
+{
+  display_number = map(analogRead(PIN_TIME_INPUT), 0, 1023, 0, 99);
 }
 
 void stateRun()
