@@ -73,7 +73,7 @@ int last_time_set = 0;
 volatile int display_number; // the number currently being displayed.
 volatile byte current_digit = DIGIT_COUNT - 1; // The digit currently being shown in the multiplexing.
 
-//int start_time; // MINUTES 
+
 volatile byte dot_state = 0b00011000; // Position & visibiliy of dot (left most bit indicates visibility - 11000, 10100, 10010, 10001)
 
 const byte digit_map[12] =      //seven segment digits in bits
@@ -110,7 +110,7 @@ int timer_countdown;
 
 unsigned long alarm_start; // When the alarm started
 unsigned long input_time_last; // When the countdown time was last updated by user input
-
+unsigned long zero_time; // When zero was reached
 
 //timer 2 compare ISR
 ISR (TIMER2_COMPA_vect)
@@ -290,15 +290,22 @@ void inputTime()
       restartCountDownTimers();
       timer_state = T_COUNTDOWN;
     }
-    
+  }
+  
+  // Hnadle zero as a time that has been set, not counted down to.
+  if (timer_state != T_ALARM) {
     if (display_number == 0) {
-      // Wait longer if set to zero
-      if (now - input_time_last > 1500) {
+      if (zero_time == 0) {
+        zero_time = now;
+      } else if (now - zero_time > 1500) {
+        zero_time = 0;
         // Turn off
         goToSleep(); 
         // Wake up, and start a new count down.
         countdownStart();
       }
+    } else {
+      zero_time = 0;
     }
   }
   
