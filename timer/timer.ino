@@ -12,8 +12,6 @@
 #include <avr/sleep.h>    // Sleep Modes
 #include <avr/power.h>    // Power management
 #include "SimpleTimer.h"
- 
-#define START_TIME 30 // Default start at 30 minutes
 
 #define ALARM_SOUND_SECONDS 1 * 1000 // How long for the sound alarm
 #define ALARM_LIGHT_SECONDS 1 * 1000 // How long for the sound alarm
@@ -70,7 +68,7 @@ int dataPin = PIN_DATA;
 
 const byte digit_pins[DIGIT_COUNT] = {PIN_DIGIT_3, PIN_DIGIT_2, PIN_DIGIT_1, PIN_DIGIT_0};
 
-int last_time_set = START_TIME;
+int last_time_set = 0;
 volatile int display_number; // the number currently being displayed.
 volatile byte current_digit = DIGIT_COUNT - 1; // The digit currently being shown in the multiplexing.
 
@@ -150,8 +148,6 @@ void setup()
   
   countdownStart();
   
-  
-  //timer.setInterval(200, experiment);
 }
 
 void loop() 
@@ -168,11 +164,6 @@ void loop()
   Serial.println("WAKE UP");
   Serial.flush();
   */
-}
-
-void experiment()
-{
-  display_number = map(analogRead(PIN_TIME_INPUT), 0, 1023, 0, 99);
 }
 
 void stateRun()
@@ -226,7 +217,7 @@ void countdownStart()
 {
   timer_state = T_COUNTDOWN;
   // MINUTES 
-  display_number = START_TIME; 
+  display_number = knobTime(); 
   Serial.println(display_number);
   restartCountDownTimers();
 }
@@ -266,10 +257,18 @@ void timersDisable()
   timer.disable(timer_countdown);
 }
 
+/**
+ * The time the knob is set to.
+ */
+int knobTime()
+{
+  return map(analogRead(PIN_TIME_INPUT), 0, 1023, 0, 99);
+}
+
 void inputTime()
 {
   unsigned long now = millis();
-  int val = map(analogRead(PIN_TIME_INPUT), 0, 1023, 0, 99);
+  int val = knobTime();
   if (val != last_time_set) {
     display_number = val;
     last_time_set = val;
@@ -278,20 +277,25 @@ void inputTime()
     timer_state = T_SETTING;
   }
   
-  if (now - input_time_last > 500) {
-    // No knob change for long enough
-    // Carry on counting
-    timer_state = T_COUNTDOWN;
+  if (timer_state == T_SETTING) {
+    if (now - input_time_last > 500) {
+      // No knob change for long enough
+      // Start counting from the new time
+      restartCountDownTimers();
+      timer_state = T_COUNTDOWN;
+    }
     
     if (display_number == 0) {
-      // Turn off
-      goToSleep(); 
-      // Wake up, and start a new count down.
-      countdownStart();
-      
-    } 
+      // Wait longer if set to zero
+      if (now - input_time_last > 1500) {
+        // Turn off
+        goToSleep(); 
+        // Wake up, and start a new count down.
+        countdownStart();
+      }
+    }
   }
-
+  
 /*
   Serial.print(now);  Serial.print(" ");
   Serial.print(input_time_last); Serial.print(" ");
