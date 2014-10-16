@@ -13,7 +13,7 @@
 #include <avr/power.h>    // Power management
 #include "SimpleTimer.h"
  
-#define START_TIME 5 // Default start at 30 minutes
+#define START_TIME 30 // Default start at 30 minutes
 
 #define ALARM_SOUND_SECONDS 1 * 1000 // How long for the sound alarm
 #define ALARM_LIGHT_SECONDS 1 * 1000 // How long for the sound alarm
@@ -70,6 +70,7 @@ int dataPin = PIN_DATA;
 
 const byte digit_pins[DIGIT_COUNT] = {PIN_DIGIT_3, PIN_DIGIT_2, PIN_DIGIT_1, PIN_DIGIT_0};
 
+int last_time_set = START_TIME;
 volatile int display_number; // the number currently being displayed.
 volatile byte current_digit = DIGIT_COUNT - 1; // The digit currently being shown in the multiplexing.
 
@@ -101,27 +102,16 @@ enum timer_states {
 };
 timer_states timer_state = T_COUNTDOWN; // Just start counting
 
-// Time setting states
-enum setting_states {
-  S_NONE,
-  S_REDUCE_FAST,
-  S_REDUCE_MED,
-  S_REDUCE_SLOW,
-  S_INCREASE_SLOW,
-  S_INCREASE_MED,
-  S_INCREASE_FAST,
-};
-setting_states setting_state = S_NONE;
 
 SimpleTimer timer;
 int timer_dot_blink;
 int timer_dot_move;
 int timer_countdown;
-int zero_delay = 1000; // How long to wait with a setting of zero befor sleeping, allows sweeping past zero.
-unsigned long zero_prev = 0;
-//int alarm_count = ALARM_SECONDS; // How many calls to everySecond() to sound the alarm
+
+
 unsigned long alarm_start; // When the alarm started
-unsigned long setting_update_last; // When the display number was last changed
+unsigned long input_time_last; // When the countdown time was last updated by user input
+
 
 //timer 2 compare ISR
 ISR (TIMER2_COMPA_vect)
@@ -149,11 +139,9 @@ void setup()
   
   multiplexInit();
   
-  /*
+  // Read the knob
   timer.setInterval(200, inputTime);
-  
-  //timer.setInterval(1000, everySecond);
-  
+  // Blink the dot
   timer_dot_blink = timer.setInterval(500, dotBlink);
   // Move the dot every 15 seconds
   timer_dot_move = timer.setInterval(15000, dotMove);
@@ -161,16 +149,16 @@ void setup()
   timer_countdown = timer.setInterval(60000, countdownUpdate);
   
   countdownStart();
-  */
   
-  timer.setInterval(200, experiment);
+  
+  //timer.setInterval(200, experiment);
 }
 
 void loop() 
 {
   timer.run();  
   
-  //stateRun();
+  stateRun();
   
   /*
   Serial.println("sleep");
@@ -190,71 +178,6 @@ void experiment()
 void stateRun()
 {
   unsigned long now;
-  
-  if (setting_state == S_NONE) {
-    setting_update_last = 0;
-  } else {
-    now = millis();
-  }
-  
-  switch(setting_state) {
-    case S_REDUCE_FAST:
-      if (now - 100 > setting_update_last) {
-        setting_update_last = now;
-        if (display_number > 0) {
-          --display_number; 
-        }
-      }
-      break;
-      
-    case S_REDUCE_MED:
-      if (now - 250 > setting_update_last) {
-        setting_update_last = now;
-        if (display_number > 0) {
-          --display_number; 
-        }
-      }
-      break;
-      
-    case S_REDUCE_SLOW:
-      if (now - 500 > setting_update_last) {
-        setting_update_last = now;
-        if (display_number > 0) {
-          --display_number; 
-        }
-      }
-      break;
-      
-    case S_NONE:
-      break;
-      
-    case S_INCREASE_SLOW:
-      if (now - 500 > setting_update_last) {
-        setting_update_last = now;
-        if (display_number < 9999) {
-          ++display_number; 
-        }
-      }
-      break;
-      
-    case S_INCREASE_MED:
-      if (now - 250 > setting_update_last) {
-        setting_update_last = now;
-        if (display_number < 9999) {
-          ++display_number; 
-        }
-      }
-      break;
-      
-    case S_INCREASE_FAST:
-      if (now - 100 > setting_update_last) {
-        setting_update_last = now;
-        if (display_number < 9999) {
-          ++display_number; 
-        }
-      }
-      break;
-  }
   
   switch(timer_state) {
     case T_COUNTDOWN:
@@ -345,57 +268,38 @@ void timersDisable()
 
 void inputTime()
 {
-  int val = analogRead(PIN_TIME_INPUT);
-
-  if (INPUT_LEFT_FAST_MIN <= val && val < INPUT_LEFT_FAST_MAX) {
+  unsigned long now = millis();
+  int val = map(analogRead(PIN_TIME_INPUT), 0, 1023, 0, 99);
+  if (val != last_time_set) {
+    display_number = val;
+    last_time_set = val;
+    input_time_last = now;
+    // Setting the time
     timer_state = T_SETTING;
-    setting_state = S_REDUCE_FAST;
-  } else if (INPUT_LEFT_MED_MIN <= val && val < INPUT_LEFT_MED_MAX) {
-    timer_state = T_SETTING;
-    setting_state = S_REDUCE_MED;
-  } else if (INPUT_LEFT_SMALL_MIN < val && val < INPUT_LEFT_SMALL_MAX) {
-    timer_state = T_SETTING;
-    setting_state = S_REDUCE_SLOW;
-  } else if (INPUT_NONE_MIN < val && val < INPUT_NONE_MAX) {
-    setting_state = S_NONE;
-    if (timer_state == T_SETTING) {
-      if (display_number == 0) {
-        
-        // Allow a sweep past zero
-        unsigned long now = millis();
-        if (zero_prev == 0) {
-          zero_prev = now; 
-        }
-        if (now - zero_prev > zero_delay) {
-          zero_prev = 0;
-          // Just "turn off"
-          goToSleep(); 
-          // Wake up, and start a new count down.
-          countdownStart();
-        }
-        
-      } else {
-        // Restart the countdown
-        restartCountDownTimers();
-        timer_state = T_COUNTDOWN;
-      }
-    }
-  } else if (INPUT_RIGHT_SMALL_MIN < val && val < INPUT_RIGHT_SMALL_MAX) {
-    timer_state = T_SETTING;
-    setting_state = S_INCREASE_SLOW;
-  } else if (INPUT_RIGHT_MED_MIN < val && val < INPUT_RIGHT_MED_MAX) {
-    timer_state = T_SETTING;
-    setting_state = S_INCREASE_MED;
-  } else if (INPUT_RIGHT_FAST_MIN < val && val < INPUT_RIGHT_FAST_MAX) {
-    timer_state = T_SETTING;
-    setting_state = S_INCREASE_FAST;
   }
   
-  Serial.print(val);
-  Serial.print(" ");
-  Serial.println(setting_state);
-  Serial.flush();
-  
+  if (now - input_time_last > 500) {
+    // No knob change for long enough
+    // Carry on counting
+    timer_state = T_COUNTDOWN;
+    
+    if (display_number == 0) {
+      // Turn off
+      goToSleep(); 
+      // Wake up, and start a new count down.
+      countdownStart();
+      
+    } 
+  }
+
+/*
+  Serial.print(now);  Serial.print(" ");
+  Serial.print(input_time_last); Serial.print(" ");
+  Serial.print(now - input_time_last); Serial.print(" ");
+  Serial.print(timer_state); Serial.print(" ");
+  Serial.println(display_number);
+  //Serial.flush();
+ */ 
 }
 
 /**
@@ -415,6 +319,14 @@ void dotBlink()
     // dot off
     bitWrite(dot_state, 4, 0);
   }
+  
+  /*
+  Serial.print(timer_state);
+  Serial.print(" ");
+  Serial.print(dot_state, BIN);
+  Serial.print(" ");
+  Serial.println(display_number);
+  */
 }
 
 /**
