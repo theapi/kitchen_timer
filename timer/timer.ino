@@ -40,6 +40,7 @@
 #define PIN_DIGIT_2  5  // Multiplex pin for the digit
 #define PIN_DIGIT_3  4  // Multiplex pin for the digit
 #define PIN_TIME_INPUT A0 
+#define PIN_KNOB_POWER A1 // Power to the pot, turn off when not in use.
 
 #define DIGIT_COUNT 4 // 4 digit display
  
@@ -126,6 +127,8 @@ void setup()
   pinMode(latchPin, OUTPUT);
   pinMode(clockPin, OUTPUT);
   pinMode(dataPin, OUTPUT);
+  pinMode(PIN_KNOB_POWER, OUTPUT);
+  digitalWrite(PIN_KNOB_POWER, HIGH);
   
   pinMode(13, OUTPUT); // TMP
   
@@ -267,6 +270,9 @@ int knobTime()
 
 void inputTime()
 {
+  // Send power to the knob
+  digitalWrite(PIN_KNOB_POWER, HIGH);
+  
   unsigned long now = millis();
   int val = knobTime();
   if (val != last_time_set) {
@@ -295,6 +301,9 @@ void inputTime()
       }
     }
   }
+  
+  // Turn off the knob
+  digitalWrite(PIN_KNOB_POWER, LOW);
   
 /*
   Serial.print(now);  Serial.print(" ");
