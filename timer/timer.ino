@@ -74,7 +74,7 @@ volatile int display_number; // the number currently being displayed.
 volatile byte current_digit = DIGIT_COUNT - 1; // The digit currently being shown in the multiplexing.
 
 
-volatile byte dot_state = 0b00011000; // Position & visibiliy of dot (left most bit indicates visibility - 11000, 10100, 10010, 10001)
+volatile byte dot_state = 0b00001000; // Position & visibiliy of dot (left most bit indicates visibility - 11000, 10100, 10010, 10001)
 
 const byte digit_map[12] =      //seven segment digits in bits
 {
@@ -99,8 +99,14 @@ enum timer_states {
   T_SETTING,
   T_OFF
 };
-timer_states timer_state = T_COUNTDOWN; // Just start counting
+timer_states timer_state = T_OFF;
 
+enum button_states {
+  B_OFF, 
+  B_SETTING, 
+  B_COUNTDOWN,
+};
+button_states button_state = B_SETTING;
 
 SimpleTimer timer;
 int timer_dot_blink;
@@ -111,11 +117,19 @@ int timer_countdown;
 unsigned long alarm_start; // When the alarm started
 unsigned long input_time_last; // When the countdown time was last updated by user input
 unsigned long zero_time; // When zero was reached
+volatile byte button_clicked; //  Flag the button was clicked
+unsigned long button_clicked_time;
 
 //timer 2 compare ISR
 ISR (TIMER2_COMPA_vect)
 {
   updateDisplay();
+}
+
+// ISR for external interrupt
+void buttonClick()
+{
+  button_clicked = 1;
 }
 
 void setup() 
@@ -140,8 +154,11 @@ void setup()
   
   multiplexInit();
   
+  attachInterrupt(0, buttonClick, HIGH);
+  
   // Read the knob
-  timer.setInterval(200, inputTime);
+  //timer.setInterval(200, inputTime);
+  
   // Blink the dot
   timer_dot_blink = timer.setInterval(500, dotBlink);
   // Move the dot every 15 seconds
@@ -149,7 +166,7 @@ void setup()
   // Countdown with a minute resolution.
   timer_countdown = timer.setInterval(60000, countdownUpdate);
   
-  countdownStart();
+  //countdownStart();
   
 }
 
@@ -171,10 +188,64 @@ void loop()
 
 void stateRun()
 {
-  unsigned long now;
+  unsigned long now = millis();
+  
+  if (button_clicked) { 
+    button_clicked = 0;
+    /*
+    Serial.println(digitalRead(2));
+    
+    if (now - button_clicked_time > 1000) {
+      // Is it still pressed?
+      if (digitalRead(2)) {
+        Serial.println("LONG PRESS...");
+      }
+    }
+    */
+    
+    // debounce
+    if (now - button_clicked_time > 500) {
+      button_clicked_time = millis();
+      
+      Serial.println("CLICK!");
+      Serial.println(timer_state);
+      
+      
+      
+      
+      switch(button_state) {
+        case B_SETTING:
+          // Switching to countdown mode
+          restartCountDownTimers();
+          timer_state = T_COUNTDOWN;
+          button_state = B_COUNTDOWN;
+          // Turn off the knob
+          digitalWrite(PIN_KNOB_POWER, LOW);
+          break; 
+          
+        case B_COUNTDOWN:
+          // Switching to setting mode
+          timer_state = T_SETTING;
+          button_state = B_SETTING;
+          // Send power to the knob
+          digitalWrite(PIN_KNOB_POWER, HIGH);
+          break; 
+          
+        case B_OFF:
+        
+          break;
+      }
+     
+    }
+  } else {
+    if (button_state == B_SETTING) {
+      inputTime(); 
+    }
+  }
   
   switch(timer_state) {
     case T_COUNTDOWN:
+      
       break;
     
     case T_ALARM:
@@ -185,7 +256,7 @@ void stateRun()
         // Handle the running alarm
         byte finished_sound = 0;
         byte finished_light = 0;
-        now = millis();
+        
         if (now - alarm_start > ALARM_SOUND_SECONDS) {
           // stop the sound
           finished_sound = 1;
@@ -270,29 +341,31 @@ int knobTime()
 
 void inputTime()
 {
-  // Send power to the knob
-  digitalWrite(PIN_KNOB_POWER, HIGH);
+
   
   unsigned long now = millis();
   int val = knobTime();
   if (val != last_time_set) {
+       
     display_number = val;
     last_time_set = val;
     input_time_last = now;
     // Setting the time
-    timer_state = T_SETTING;
+    //timer_state = T_SETTING;
   }
   
   if (timer_state == T_SETTING) {
+    /*
     if (now - input_time_last > 500) {
       // No knob change for long enough
       // Start counting from the new time
       restartCountDownTimers();
-      timer_state = T_COUNTDOWN;
+      //timer_state = T_COUNTDOWN;
     }
+    */
   }
   
-  // Hnadle zero as a time that has been set, not counted down to.
+  // Handle zero as a time that has been set, not counted down to.
   if (timer_state != T_ALARM) {
     if (display_number == 0) {
       if (zero_time == 0) {
@@ -309,8 +382,7 @@ void inputTime()
     }
   }
   
-  // Turn off the knob
-  digitalWrite(PIN_KNOB_POWER, LOW);
+  
   
 /*
   Serial.print(now);  Serial.print(" ");
@@ -508,7 +580,7 @@ void goToSleep()
   
   digitalWrite(13, LOW);
   // will be called when pin D2 goes high
-  attachInterrupt(0, wake, HIGH);
+  attachInterrupt(0, buttonClick, HIGH);
   //cli();
 
   set_sleep_mode(SLEEP_MODE_PWR_DOWN);
@@ -546,8 +618,4 @@ void goToSleep()
   power_all_enable();
 }
 
-void wake()
-{
-  // Just wake up. Do nothing else here as it is an ISR.
-}
 
