@@ -169,7 +169,7 @@ void setup()
   // Move the dot every 15 seconds
   timer_dot_move = timer.setInterval(15000, dotMove);
   // Countdown with a minute resolution.
-  timer_countdown = timer.setInterval(1000, countdownUpdate);
+  timer_countdown = timer.setInterval(60000, countdownUpdate);
   
   //countdownStart();
   settingStart();
