@@ -18,9 +18,10 @@
  
 #define START_TIME 30 // Default start at 30 minutes
 
-#define ALARM_SOUND_SECONDS 2 * 1000 // How long for the sound alarm
-#define ALARM_LIGHT_SECONDS 2 * 1000 // How long for the sound alarm
-#define SETTING_WAIT        5 * 1000 // How long to wait for a setting confirmation
+#define ALARM_SOUND_SECONDS 30 * 1000L // How long for the sound alarm
+#define ALARM_LIGHT_SECONDS 60 * 1000L // How long for the light alarm
+
+#define SETTING_WAIT       60 * 1000L // How long to wait for a setting confirmation
  
 // Inputs from the accelerometer for setting the time
 #define INPUT_UP_FAST     7
@@ -38,7 +39,7 @@
 #define PIN_DIGIT_1  6  // Multiplex pin for the digit
 #define PIN_DIGIT_2  5  // Multiplex pin for the digit
 #define PIN_DIGIT_3  4  // Multiplex pin for the digit
-//#define PIN_TIME_INPUT A0 
+
 
 #define DIGIT_COUNT 4 // 4 digit display
  
@@ -162,16 +163,14 @@ void setup()
   
   
   timer.setInterval(200, inputTime);
-  
-  //
-  
+
   timer_dot_blink = timer.setInterval(500, dotBlink);
   // Move the dot every 15 seconds
   timer_dot_move = timer.setInterval(15000, dotMove);
   // Countdown with a minute resolution.
   timer_countdown = timer.setInterval(60000, countdownUpdate);
   
-  //countdownStart();
+ 
   settingStart();
   
 }
