@@ -20,6 +20,7 @@
 
 #define ALARM_SOUND_SECONDS 2 * 1000 // How long for the sound alarm
 #define ALARM_LIGHT_SECONDS 2 * 1000 // How long for the sound alarm
+#define SETTING_WAIT        5 * 1000 // How long to wait for a setting confirmation
  
 // Inputs from the accelerometer for setting the time
 #define INPUT_UP_FAST     7
@@ -115,9 +116,8 @@ SimpleTimer timer;
 int timer_dot_blink;
 int timer_dot_move;
 int timer_countdown;
-int zero_delay = 1000; // How long to wait with a setting of zero befor sleeping, allows sweeping past zero.
-unsigned long zero_prev = 0;
-//int alarm_count = ALARM_SECONDS; // How many calls to everySecond() to sound the alarm
+
+unsigned long setting_none_time = 0;
 unsigned long alarm_start; // When the alarm started
 unsigned long setting_update_last; // When the display number was last changed
 
@@ -206,12 +206,12 @@ void stateRun()
       // set the LOW_POWER bit to 1 in R_BW_RATE: with this we get worst measurements but we save power
       //int bwRate = accel.readRegister(ADXL345_REG_BW_RATE);
       //accel.writeRegister(ADXL345_REG_BW_RATE, bwRate | B00010000);
-      
+      /*
       // Go back to sleep if needed
       if (timer_state == T_WOKE || timer_state == T_OFF) {
         goToSleep(); 
       }
-      
+      */
     }
     
     if (interruptSource & B00010000) {
@@ -275,6 +275,22 @@ void stateRun()
       break;
       
     case S_NONE:
+      
+      if (setting_none_time == 0) {
+        setting_none_time = now;
+      } else if (now - setting_none_time > SETTING_WAIT) {
+        setting_none_time = 0;
+        setting_update_last = 0;
+        // Turn off
+        Serial.println("Sleep now");
+        Serial.flush();
+        goToSleep(); 
+        
+        Serial.println("Wake now");
+        Serial.flush();
+        // Wake up, and start a new count down.
+        settingStart();
+      }
       
       if (setting_update_last > 0) {
         setting_update_last = 0;
@@ -356,7 +372,7 @@ void stateRun()
       break;
       
     case T_WOKE:
-      countdownStart();
+      settingStart();
       break;
       
     case T_ERROR:
@@ -695,16 +711,11 @@ void accelerometerSetup(void)
     
     
     Serial.print("ADXL345_REG_POWER_CTL = "); Serial.println(accel.readRegister(ADXL345_REG_POWER_CTL), BIN);
-    
+    Serial.print("ADXL345_REG_BW_RATE = "); Serial.println(accel.readRegister(ADXL345_REG_BW_RATE), BIN);   
     Serial.print("ADXL345_REG_ACT_TAP_STATUS = "); Serial.println(accel.readRegister(ADXL345_REG_ACT_TAP_STATUS), BIN);
-    
-    
     Serial.print("ADXL345_REG_INT_ENABLE = "); Serial.println(accel.readRegister(ADXL345_REG_INT_ENABLE), BIN);
-    
     Serial.print("ADXL345_REG_INT_MAP = "); Serial.println(accel.readRegister(ADXL345_REG_INT_MAP), BIN);
-    
     Serial.print("ADXL345_REG_ACT_INACT_CTL = "); Serial.println(accel.readRegister(ADXL345_REG_ACT_INACT_CTL), BIN);
-
     Serial.print("ADXL345_REG_THRESH_ACT = "); Serial.println(accel.readRegister(ADXL345_REG_THRESH_ACT), BIN);
     
     // Turn off interrupts
@@ -730,9 +741,9 @@ void accelerometerSetup(void)
     */
     
     
-    accel.writeRegister(ADXL345_REG_INT_ENABLE, B1111100); // enable signle and double tap, activity, inactivity and free fall detection
-  
-  
+    accel.writeRegister(ADXL345_REG_INT_MAP, B00001000); // all interrupts on INT1, except inactivity
+    
+      
     // free fall configuration
     accel.writeRegister(ADXL345_REG_TIME_FF, 0x14); // set free fall time
     accel.writeRegister(ADXL345_REG_THRESH_FF, 0x05); // set free fall threshold
@@ -747,8 +758,8 @@ void accelerometerSetup(void)
     accel.writeRegister(ADXL345_REG_WINDOW, 0xFF);
     
     // inactivity configuration
-    accel.writeRegister(ADXL345_REG_TIME_INACT, 10); // 1s / LSB
-    accel.writeRegister(ADXL345_REG_THRESH_INACT, 3); // 62.5mg / LSB
+    accel.writeRegister(ADXL345_REG_TIME_INACT, 1); // 1s / LSB
+    accel.writeRegister(ADXL345_REG_THRESH_INACT, 1); // 62.5mg / LSB
     // also working good with high movements: R_TIME_INACT=5, R_THRESH_INACT=16, R_ACT_INACT_CTL=B8(00000111)
     // but unusable for a quite slow movements
     
@@ -765,6 +776,14 @@ void accelerometerSetup(void)
     //accel.writeRegister(ADXL345_REG_POWER_CTL, B00111100);
     
     accel.writeRegister(ADXL345_REG_POWER_CTL, B00111000);
+    
+    // set the LOW_POWER bit to 0 in R_BW_RATE: get back to full accuracy measurement (we will consume more power)
+    int bwRate = accel.readRegister(ADXL345_REG_BW_RATE);
+    accel.writeRegister(ADXL345_REG_BW_RATE, bwRate & B00001010); // 100 Hz 50uA
+    
+    accel.writeRegister(ADXL345_REG_INT_ENABLE, B1111100); // enable single and double tap, activity, inactivity and free fall detection
+  
+
     
     //accelerometerStartMeasuring();
 
