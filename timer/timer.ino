@@ -204,10 +204,9 @@ void stateRun()
       Serial.println("### Inactivity");
       // we don't need to put the device in sleep because we set the AUTO_SLEEP bit to 1 in R_POWER_CTL
       // set the LOW_POWER bit to 1 in R_BW_RATE: with this we get worst measurements but we save power
-      int bwRate = accel.readRegister(ADXL345_REG_BW_RATE);
-      accel.writeRegister(ADXL345_REG_BW_RATE, bwRate | B00010000);
+      //int bwRate = accel.readRegister(ADXL345_REG_BW_RATE);
+      //accel.writeRegister(ADXL345_REG_BW_RATE, bwRate | B00010000);
       
-      Serial.println(timer_state);
       // Go back to sleep if needed
       if (timer_state == T_WOKE || timer_state == T_OFF) {
         goToSleep(); 
@@ -218,7 +217,7 @@ void stateRun()
     if (interruptSource & B00010000) {
       Serial.println("### Activity");
       
-      accelerometerStartMeasuring();
+      //accelerometerStartMeasuring();
     }
     
     if (interruptSource & B00100000) {
@@ -763,15 +762,17 @@ void accelerometerSetup(void)
     // set the ADXL345 in measurement and sleep Mode: this will save power while while we will still be able to detect activity
     // set the Link bit to 1 so that the activity and inactivity functions aren't concurrent but alternatively activated
     // set the AUTO_SLEEP bit to 1 so that the device automatically goes to sleep when it detects inactivity
-    accel.writeRegister(ADXL345_REG_POWER_CTL, B00111100);
+    //accel.writeRegister(ADXL345_REG_POWER_CTL, B00111100);
     
-    accelerometerStartMeasuring();
+    accel.writeRegister(ADXL345_REG_POWER_CTL, B00111000);
+    
+    //accelerometerStartMeasuring();
 
   }
 }
 
 void accelerometerStartMeasuring()
-{
+{return;
   // get current power mode
   int powerCTL = accel.readRegister(ADXL345_REG_POWER_CTL);
   // set the device back in measurement mode
