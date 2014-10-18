@@ -200,24 +200,16 @@ void stateRun()
       Serial.println("### FREE_FALL");
     }
     
+    // Inactivity gets sent to the unused INT2 pin so we can ignore it.
+    // It still needs to be fired by the ADXL345 so it can set itselt to low power mode
+    /*
     if (interruptSource & B00001000) {
       Serial.println("### Inactivity");
-      // we don't need to put the device in sleep because we set the AUTO_SLEEP bit to 1 in R_POWER_CTL
-      // set the LOW_POWER bit to 1 in R_BW_RATE: with this we get worst measurements but we save power
-      //int bwRate = accel.readRegister(ADXL345_REG_BW_RATE);
-      //accel.writeRegister(ADXL345_REG_BW_RATE, bwRate | B00010000);
-      /*
-      // Go back to sleep if needed
-      if (timer_state == T_WOKE || timer_state == T_OFF) {
-        goToSleep(); 
-      }
-      */
     }
+    */
     
     if (interruptSource & B00010000) {
       Serial.println("### Activity");
-      
-      //accelerometerStartMeasuring();
     }
     
     if (interruptSource & B00100000) {
@@ -229,20 +221,17 @@ void stateRun()
       
     }
     else if (interruptSource & B01000000) { // when a double tap is detected also a signle tap is deteced. we use an else here so that we only print the double tap
-      Serial.println("### SINGLE_TAP Axes");
+      Serial.println("### SINGLE_TAP");
     }
     
     
     interrupt_flag = 0; 
   }
   
-  /*
-  if (setting_state == S_NONE) {
-    setting_update_last = 0;
-  } else {
-    now = millis();
+  
+  if (setting_state != S_NONE) {
+    setting_none_time = 0;
   }
-  */
   
   now = millis();
   
@@ -276,26 +265,21 @@ void stateRun()
       
     case S_NONE:
       
-      if (setting_none_time == 0) {
-        setting_none_time = now;
-      } else if (now - setting_none_time > SETTING_WAIT) {
-        setting_none_time = 0;
-        setting_update_last = 0;
-        // Turn off
-        Serial.println("Sleep now");
-        Serial.flush();
-        goToSleep(); 
-        
-        Serial.println("Wake now");
-        Serial.flush();
-        // Wake up, and start a new count down.
-        settingStart();
-      }
-      
-      if (setting_update_last > 0) {
-        setting_update_last = 0;
-        if (timer_state == T_COUNTDOWN) {
-          countdownResume();
+      if (timer_state == T_SETTING) {
+        if (setting_none_time == 0) {
+          setting_none_time = now;
+        } else if (now - setting_none_time > SETTING_WAIT) {
+          setting_none_time = 0;
+          setting_update_last = 0;
+          // Turn off
+          Serial.println("Sleep now");
+          Serial.flush();
+          goToSleep(); 
+          
+          Serial.println("Wake now");
+          Serial.flush();
+          // Wake up, and start a new count down.
+          settingStart();
         }
       }
       
@@ -757,14 +741,14 @@ void accelerometerSetup(void)
     accel.writeRegister(ADXL345_REG_LATENT, 0x10);
     accel.writeRegister(ADXL345_REG_WINDOW, 0xFF);
     
-    // inactivity configuration
-    accel.writeRegister(ADXL345_REG_TIME_INACT, 1); // 1s / LSB
+    // inactivity configuration - 0 for inactive as soon as no movement
+    accel.writeRegister(ADXL345_REG_TIME_INACT, 0); // 1s / LSB
     accel.writeRegister(ADXL345_REG_THRESH_INACT, 1); // 62.5mg / LSB
     // also working good with high movements: R_TIME_INACT=5, R_THRESH_INACT=16, R_ACT_INACT_CTL=B8(00000111)
     // but unusable for a quite slow movements
     
     // activity configuration
-    accel.writeRegister(ADXL345_REG_THRESH_ACT, 8); // 62.5mg / LSB
+    accel.writeRegister(ADXL345_REG_THRESH_ACT, 4); // 62.5mg / LSB
     
     // activity and inctivity control
     accel.writeRegister(ADXL345_REG_ACT_INACT_CTL, B11111111); // enable activity and inactivity detection on x,y,z using ac
