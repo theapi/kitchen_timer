@@ -750,7 +750,7 @@ void accelerometerSetup(void)
     accel.writeRegister(ADXL345_REG_THRESH_ACT, 4); // 62.5mg / LSB
     
     // activity and inctivity control
-    accel.writeRegister(ADXL345_REG_ACT_INACT_CTL, B11111111); // enable activity and inactivity detection on x,y,z using ac
+    accel.writeRegister(ADXL345_REG_ACT_INACT_CTL, B01110111); // enable activity and inactivity detection on x,y,z using dc
     
    
     // set the ADXL345 in measurement and sleep Mode: this will save power while while we will still be able to detect activity
