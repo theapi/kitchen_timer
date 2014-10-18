@@ -120,6 +120,8 @@ unsigned long zero_prev = 0;
 unsigned long alarm_start; // When the alarm started
 unsigned long setting_update_last; // When the display number was last changed
 
+byte interrupt_flag;
+
 // Assign a unique ID to this sensor at the same time
 Adafruit_ADXL345_Unified accel = Adafruit_ADXL345_Unified(12345);
 
@@ -127,6 +129,11 @@ Adafruit_ADXL345_Unified accel = Adafruit_ADXL345_Unified(12345);
 ISR (TIMER2_COMPA_vect)
 {
   updateDisplay();
+}
+
+void ISR_activity() 
+{
+  interrupt_flag = 1;
 }
 
 void setup() 
@@ -149,6 +156,8 @@ void setup()
   
   multiplexSetup();
   accelerometerSetup();
+  
+  attachInterrupt(0, ISR_activity, HIGH);
   
   
   timer.setInterval(200, inputTime);
@@ -190,6 +199,16 @@ void loop()
 void stateRun()
 {
   unsigned long now;
+  
+  if (interrupt_flag) {
+    Serial.print("flag = "); Serial.println(interrupt_flag);
+    
+    // read the register to clear it
+    byte reg_val = accel.readRegister(ADXL345_REG_INT_SOURCE);
+    Serial.print("ADXL345_REG_INT_SOURCE = "); Serial.println(reg_val, BIN);
+
+    interrupt_flag = 0; 
+  }
   
   if (setting_state == S_NONE) {
     setting_update_last = 0;
@@ -307,7 +326,6 @@ void countdownStart()
   if (timer_state == T_ERROR) return;
 
   timer_state = T_COUNTDOWN;
-  Serial.println(display_number);
   restartCountDownTimers();
   
 }
@@ -538,7 +556,7 @@ void goToSleep()
   
   digitalWrite(13, LOW);
   // will be called when pin D2 goes high
-  attachInterrupt(0, wake, HIGH);
+  //attachInterrupt(0, wake, HIGH);
   //cli();
 
   set_sleep_mode(SLEEP_MODE_PWR_DOWN);
@@ -560,7 +578,7 @@ void goToSleep()
   sleep_cpu();              // sleep within 3 clock cycles of brown out
   
   sleep_disable(); 
-  detachInterrupt(0); 
+  //detachInterrupt(0); 
   //MCUSR = 0; // clear the reset register 
 
   digitalWrite(13, HIGH);
@@ -621,6 +639,32 @@ void accelerometerSetup(void)
     accel.setRange(ADXL345_RANGE_16_G); //  yep 16 - reduces sensitivity
     // Display some basic information on this sensor
     displaySensorDetails();
+    
+    Serial.print("ADXL345_REG_INT_ENABLE = "); Serial.println(accel.readRegister(ADXL345_REG_INT_ENABLE), BIN);
+    
+    Serial.print("ADXL345_REG_INT_MAP = "); Serial.println(accel.readRegister(ADXL345_REG_INT_MAP), BIN);
+    
+    Serial.print("ADXL345_REG_ACT_INACT_CTL = "); Serial.println(accel.readRegister(ADXL345_REG_ACT_INACT_CTL), BIN);
+
+    Serial.print("ADXL345_REG_THRESH_ACT = "); Serial.println(accel.readRegister(ADXL345_REG_THRESH_ACT), BIN);
+    
+    // read the register to clear it
+    accel.readRegister(ADXL345_REG_INT_SOURCE);
+    
+    // Configure which pins interrupt on what 
+    accel.writeRegister(ADXL345_REG_INT_MAP, B00100000); // double tap on int 1 (??comes in on int1 though)
+    Serial.print("ADXL345_REG_INT_MAP = "); Serial.println(accel.readRegister(ADXL345_REG_INT_MAP), BIN);
+    
+    accel.writeRegister(ADXL345_REG_ACT_INACT_CTL, B01110111); // activity on any axis (dc)
+    Serial.print("ADXL345_REG_ACT_INACT_CTL = "); Serial.println(accel.readRegister(ADXL345_REG_ACT_INACT_CTL), BIN);
+    
+    accel.writeRegister(ADXL345_REG_THRESH_ACT, 75); // what counts as activity 0 - 255
+    Serial.print("ADXL345_REG_THRESH_ACT = "); Serial.println(accel.readRegister(ADXL345_REG_THRESH_ACT), BIN);
+    
+    // Turn on interrupts
+    accel.writeRegister(ADXL345_REG_INT_ENABLE, B00110000); // double tap and activity
+    Serial.print("ADXL345_REG_INT_ENABLE = "); Serial.println(accel.readRegister(ADXL345_REG_INT_ENABLE), BIN);
+    
   }
 }
 
