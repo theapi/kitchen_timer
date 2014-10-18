@@ -8,29 +8,27 @@
 
  */
  
+#include <Wire.h>
+#include <Adafruit_Sensor.h>
+#include <Adafruit_ADXL345_U.h>
 #include <avr/wdt.h>
 #include <avr/sleep.h>    // Sleep Modes
 #include <avr/power.h>    // Power management
 #include "SimpleTimer.h"
+ 
+#define START_TIME 30 // Default start at 30 minutes
 
 #define ALARM_SOUND_SECONDS 1 * 1000 // How long for the sound alarm
 #define ALARM_LIGHT_SECONDS 1 * 1000 // How long for the sound alarm
  
-// Inputs from the potentiometer for setting the time
-#define INPUT_LEFT_FAST_MIN   0
-#define INPUT_LEFT_FAST_MAX   149
-#define INPUT_LEFT_MED_MIN    150
-#define INPUT_LEFT_MED_MAX    299
-#define INPUT_LEFT_SMALL_MIN  300
-#define INPUT_LEFT_SMALL_MAX  399
-#define INPUT_NONE_MIN        400
-#define INPUT_NONE_MAX        600 
-#define INPUT_RIGHT_SMALL_MIN 601
-#define INPUT_RIGHT_SMALL_MAX 700
-#define INPUT_RIGHT_MED_MIN   701
-#define INPUT_RIGHT_MED_MAX   850
-#define INPUT_RIGHT_FAST_MIN  851
-#define INPUT_RIGHT_FAST_MAX  1025
+// Inputs from the accelerometer for setting the time
+#define INPUT_UP_FAST     7
+#define INPUT_UP_MED      4
+#define INPUT_UP_SLOW     1
+#define INPUT_NONE        0
+#define INPUT_DOWN_SLOW  -1
+#define INPUT_DOWN_MED   -4
+#define INPUT_DOWN_FAST  -7
 
 #define PIN_LATCH    8  // ST_CP of 74HC595
 #define PIN_CLOCK    12 // SH_CP of 74HC595
@@ -39,8 +37,7 @@
 #define PIN_DIGIT_1  6  // Multiplex pin for the digit
 #define PIN_DIGIT_2  5  // Multiplex pin for the digit
 #define PIN_DIGIT_3  4  // Multiplex pin for the digit
-#define PIN_TIME_INPUT A0 
-#define PIN_KNOB_POWER A1 // Power to the pot, turn off when not in use.
+//#define PIN_TIME_INPUT A0 
 
 #define DIGIT_COUNT 4 // 4 digit display
  
@@ -57,6 +54,7 @@
 #define NUM_BLANK  B00000000 // ' '
 #define NUM_DOT    B00000100 // .
 #define NUM_DASH   B00000001 // -
+#define NUM_ERROR  B10001001
 
 #define COMPARE_REG 64 // OCR2A when to interupt (datasheet: 18.11.4)
  
@@ -69,10 +67,8 @@ int dataPin = PIN_DATA;
 
 const byte digit_pins[DIGIT_COUNT] = {PIN_DIGIT_3, PIN_DIGIT_2, PIN_DIGIT_1, PIN_DIGIT_0};
 
-int last_time_set = 0;
-volatile int display_number; // the number currently being displayed.
+volatile int display_number = START_TIME; // the number currently being displayed.
 volatile byte current_digit = DIGIT_COUNT - 1; // The digit currently being shown in the multiplexing.
-
 
 volatile byte dot_state = 0b00001000; // Position & visibiliy of dot (left most bit indicates visibility - 11000, 10100, 10010, 10001)
 
@@ -97,39 +93,40 @@ enum timer_states {
   T_COUNTDOWN, 
   T_ALARM, 
   T_SETTING,
-  T_OFF
+  T_OFF,
+  T_ERROR
 };
-timer_states timer_state = T_OFF;
+timer_states timer_state = T_SETTING;
 
-enum button_states {
-  B_OFF, 
-  B_SETTING, 
-  B_COUNTDOWN,
+// Time setting states
+enum setting_states {
+  S_NONE,
+  S_REDUCE_FAST,
+  S_REDUCE_MED,
+  S_REDUCE_SLOW,
+  S_INCREASE_SLOW,
+  S_INCREASE_MED,
+  S_INCREASE_FAST,
 };
-button_states button_state = B_SETTING;
+setting_states setting_state = S_NONE;
 
 SimpleTimer timer;
 int timer_dot_blink;
 int timer_dot_move;
 int timer_countdown;
-
-
+int zero_delay = 1000; // How long to wait with a setting of zero befor sleeping, allows sweeping past zero.
+unsigned long zero_prev = 0;
+//int alarm_count = ALARM_SECONDS; // How many calls to everySecond() to sound the alarm
 unsigned long alarm_start; // When the alarm started
-unsigned long input_time_last; // When the countdown time was last updated by user input
-unsigned long zero_time; // When zero was reached
-volatile byte button_clicked; //  Flag the button was clicked
-unsigned long button_clicked_time;
+unsigned long setting_update_last; // When the display number was last changed
+
+// Assign a unique ID to this sensor at the same time
+Adafruit_ADXL345_Unified accel = Adafruit_ADXL345_Unified(12345);
 
 //timer 2 compare ISR
 ISR (TIMER2_COMPA_vect)
 {
   updateDisplay();
-}
-
-// ISR for external interrupt
-void buttonClick()
-{
-  button_clicked = 1;
 }
 
 void setup() 
@@ -141,8 +138,6 @@ void setup()
   pinMode(latchPin, OUTPUT);
   pinMode(clockPin, OUTPUT);
   pinMode(dataPin, OUTPUT);
-  pinMode(PIN_KNOB_POWER, OUTPUT);
-  digitalWrite(PIN_KNOB_POWER, HIGH);
   
   pinMode(13, OUTPUT); // TMP
   
@@ -152,100 +147,117 @@ void setup()
     digitalWrite(digit_pins[i], HIGH);
   }
   
-  multiplexInit();
+  multiplexSetup();
+  accelerometerSetup();
   
-  attachInterrupt(0, buttonClick, HIGH);
   
-  // Read the knob
-  //timer.setInterval(200, inputTime);
+  timer.setInterval(200, inputTime);
   
-  // Blink the dot
+  //
+  
   timer_dot_blink = timer.setInterval(500, dotBlink);
   // Move the dot every 15 seconds
   timer_dot_move = timer.setInterval(15000, dotMove);
   // Countdown with a minute resolution.
   timer_countdown = timer.setInterval(60000, countdownUpdate);
   
-  //countdownStart();
+  countdownStart();
   
+  
+  //timer.setInterval(100, experiment);
+  
+}
+
+void experiment()
+{
+   // Display tilt
+   sensors_event_t event = accelerometerRead();
+   
+   // acceleration is measured in m/s^2 
+   int tilt = event.acceleration.x;
+   Serial.println(tilt); 
+   display_number = tilt;
 }
 
 void loop() 
 {
-  timer.run();  
-  
-  stateRun();
-  
-  /*
-  Serial.println("sleep");
-  Serial.flush();
-  delay(2000);
-  goToSleep();
-  Serial.println("WAKE UP");
-  Serial.flush();
-  */
+  if (timer_state != T_ERROR) {
+    timer.run();  
+    stateRun();
+  }
 }
 
 void stateRun()
 {
-  unsigned long now = millis();
+  unsigned long now;
   
-  if (button_clicked) { 
-    button_clicked = 0;
-    /*
-    Serial.println(digitalRead(2));
-    
-    if (now - button_clicked_time > 1000) {
-      // Is it still pressed?
-      if (digitalRead(2)) {
-        Serial.println("LONG PRESS...");
-      }
-    }
-    */
-    
-    // debounce
-    if (now - button_clicked_time > 500) {
-      button_clicked_time = millis();
-      
-      Serial.println("CLICK!");
-      Serial.println(timer_state);
-      
-      
-      
-      
-      switch(button_state) {
-        case B_SETTING:
-          // Switching to countdown mode
-          restartCountDownTimers();
-          timer_state = T_COUNTDOWN;
-          button_state = B_COUNTDOWN;
-          // Turn off the knob
-          digitalWrite(PIN_KNOB_POWER, LOW);
-          break; 
-          
-        case B_COUNTDOWN:
-          // Switching to setting mode
-          timer_state = T_SETTING;
-          button_state = B_SETTING;
-          // Send power to the knob
-          digitalWrite(PIN_KNOB_POWER, HIGH);
-          break; 
-          
-        case B_OFF:
-        
-          break;
-      }
-     
-    }
+  if (setting_state == S_NONE) {
+    setting_update_last = 0;
   } else {
-    if (button_state == B_SETTING) {
-      inputTime(); 
-    }
+    now = millis();
+  }
+  
+  switch(setting_state) {
+    case S_REDUCE_FAST:
+      if (now - 100 > setting_update_last) {
+        setting_update_last = now;
+        if (display_number > 0) {
+          --display_number; 
+        }
+      }
+      break;
+      
+    case S_REDUCE_MED:
+      if (now - 250 > setting_update_last) {
+        setting_update_last = now;
+        if (display_number > 0) {
+          --display_number; 
+        }
+      }
+      break;
+      
+    case S_REDUCE_SLOW:
+      if (now - 500 > setting_update_last) {
+        setting_update_last = now;
+        if (display_number > 0) {
+          --display_number; 
+        }
+      }
+      break;
+      
+    case S_NONE:
+      break;
+      
+    case S_INCREASE_SLOW:
+      if (now - 500 > setting_update_last) {
+        setting_update_last = now;
+        if (display_number < 9999) {
+          ++display_number; 
+        }
+      }
+      break;
+      
+    case S_INCREASE_MED:
+      if (now - 250 > setting_update_last) {
+        setting_update_last = now;
+        if (display_number < 9999) {
+          ++display_number; 
+        }
+      }
+      break;
+      
+    case S_INCREASE_FAST:
+      if (now - 100 > setting_update_last) {
+        setting_update_last = now;
+        if (display_number < 9999) {
+          ++display_number; 
+        }
+      }
+      break;
   }
   
   switch(timer_state) {
     case T_COUNTDOWN:
-      
       break;
     
     case T_ALARM:
@@ -256,7 +268,7 @@ void stateRun()
         // Handle the running alarm
         byte finished_sound = 0;
         byte finished_light = 0;
-        
+        now = millis();
         if (now - alarm_start > ALARM_SOUND_SECONDS) {
           // stop the sound
           finished_sound = 1;
@@ -284,16 +296,20 @@ void stateRun()
       
     case T_OFF:
       break;
+      
+    case T_ERROR:
+      break;
   } 
 }
 
 void countdownStart()
 {
+  if (timer_state == T_ERROR) return;
+
   timer_state = T_COUNTDOWN;
-  // MINUTES 
-  display_number = knobTime(); 
   Serial.println(display_number);
   restartCountDownTimers();
+  
 }
 
 void countdownUpdate()
@@ -331,67 +347,42 @@ void timersDisable()
   timer.disable(timer_countdown);
 }
 
-/**
- * The time the knob is set to.
- */
-int knobTime()
-{
-  return map(analogRead(PIN_TIME_INPUT), 0, 1023, 0, 99);
-}
-
 void inputTime()
 {
+  sensors_event_t event = accelerometerRead(); 
+  int val = event.acceleration.x; // chop to an int
 
-  
-  unsigned long now = millis();
-  int val = knobTime();
-  if (val != last_time_set) {
-       
-    display_number = val;
-    last_time_set = val;
-    input_time_last = now;
-    // Setting the time
-    //timer_state = T_SETTING;
+  if (val >= INPUT_UP_FAST) {
+    timer_state = T_SETTING;
+    setting_state = S_INCREASE_FAST;
+  } else if (val >= INPUT_UP_MED) {
+    timer_state = T_SETTING;
+    setting_state = S_INCREASE_MED;
+  } else if (val >= INPUT_UP_SLOW) {
+    timer_state = T_SETTING;
+    setting_state = S_INCREASE_SLOW;
+  } else if (val >= INPUT_DOWN_SLOW) {
+    
+    setting_state = S_NONE;
+    timer_state = T_COUNTDOWN; // TEMP
+    
+  } else if (val >= INPUT_DOWN_MED) {
+    timer_state = T_SETTING;
+    setting_state = S_REDUCE_SLOW;
+  } else if (val >= INPUT_DOWN_FAST) {
+    timer_state = T_SETTING;
+    setting_state = S_REDUCE_MED;
+  } else {
+    timer_state = T_SETTING;
+    setting_state = S_REDUCE_FAST;
   }
-  
-  if (timer_state == T_SETTING) {
-    /*
-    if (now - input_time_last > 500) {
-      // No knob change for long enough
-      // Start counting from the new time
-      restartCountDownTimers();
-      //timer_state = T_COUNTDOWN;
-    }
-    */
-  }
-  
-  // Handle zero as a time that has been set, not counted down to.
-  if (timer_state != T_ALARM) {
-    if (display_number == 0) {
-      if (zero_time == 0) {
-        zero_time = now;
-      } else if (now - zero_time > 1500) {
-        zero_time = 0;
-        // Turn off
-        goToSleep(); 
-        // Wake up, and start a new count down.
-        countdownStart();
-      }
-    } else {
-      zero_time = 0;
-    }
-  }
-  
-  
   
 /*
-  Serial.print(now);  Serial.print(" ");
-  Serial.print(input_time_last); Serial.print(" ");
-  Serial.print(now - input_time_last); Serial.print(" ");
-  Serial.print(timer_state); Serial.print(" ");
-  Serial.println(display_number);
-  //Serial.flush();
- */ 
+  Serial.print(val);
+  Serial.print(" ");
+  Serial.println(setting_state);
+  Serial.flush();
+  */
 }
 
 /**
@@ -411,14 +402,6 @@ void dotBlink()
     // dot off
     bitWrite(dot_state, 4, 0);
   }
-  
-  /*
-  Serial.print(timer_state);
-  Serial.print(" ");
-  Serial.print(dot_state, BIN);
-  Serial.print(" ");
-  Serial.println(display_number);
-  */
 }
 
 /**
@@ -459,7 +442,10 @@ void updateDisplay()
 
   byte data = 0;
 
-  if (timer_state == T_ALARM) {
+  if (timer_state == T_ERROR) {
+    // All digits as error
+    data = NUM_ERROR;
+  } else if (timer_state == T_ALARM) {
     // All digits as dashes
     data = NUM_DASH;
   } else {
@@ -538,34 +524,6 @@ void updateDisplay()
   digitalWrite(digit_pins[current_digit], LOW);
 }
 
-void multiplexInit(void)
-{
-  cli();//stop interrupts
-  
-  //set timer2 interrupt at 8kHz
-  TCCR2A = 0;// set entire TCCR2A register to 0
-  TCCR2B = 0;// same for TCCR2B
-  TCNT2  = 0;//initialize counter value to 0
-  // set compare match register 
-  OCR2A = COMPARE_REG;// = (16*10^6) / (8000*8) - 1 (must be <256)
-  // turn on CTC mode
-  TCCR2A |= (1 << WGM21);
-  // Set CS21 bit for 8 prescaler
-  //TCCR2B |= (1 << CS21);   
-  
-  // Datatasheet 18.11.2
-  // Set  prescaler
-  //TCCR2B = 0b00000110;
-  TCCR2B = 0b00000111; // 1024
-  
-  
-  // enable timer compare interrupt
-  TIMSK2 |= (1 << OCIE2A);
-  
-  sei();//allow interrupts
-  
-}
-
 void goToSleep()
 {
   timer_state == T_OFF;
@@ -580,7 +538,7 @@ void goToSleep()
   
   digitalWrite(13, LOW);
   // will be called when pin D2 goes high
-  attachInterrupt(0, buttonClick, HIGH);
+  attachInterrupt(0, wake, HIGH);
   //cli();
 
   set_sleep_mode(SLEEP_MODE_PWR_DOWN);
@@ -618,4 +576,74 @@ void goToSleep()
   power_all_enable();
 }
 
+void wake()
+{
+  // Just wake up. Do nothing else here as it is an ISR.
+}
+
+void multiplexSetup(void)
+{
+  cli();//stop interrupts
+  
+  //set timer2 interrupt at 8kHz
+  TCCR2A = 0;// set entire TCCR2A register to 0
+  TCCR2B = 0;// same for TCCR2B
+  TCNT2  = 0;//initialize counter value to 0
+  // set compare match register 
+  OCR2A = COMPARE_REG;// = (16*10^6) / (8000*8) - 1 (must be <256)
+  // turn on CTC mode
+  TCCR2A |= (1 << WGM21);
+  // Set CS21 bit for 8 prescaler
+  //TCCR2B |= (1 << CS21);   
+  
+  // Datatasheet 18.11.2
+  // Set  prescaler
+  //TCCR2B = 0b00000110;
+  TCCR2B = 0b00000111; // 1024
+  
+  
+  // enable timer compare interrupt
+  TIMSK2 |= (1 << OCIE2A);
+  
+  sei();//allow interrupts
+  
+}
+
+void accelerometerSetup(void)
+{
+  // Initialise the sensor
+  if (!accel.begin()) {
+    // There was a problem detecting the ADXL345
+    Serial.println("Damn, no ADXL345 detected");
+    timer_state == T_ERROR;
+  } else {
+    
+    accel.setRange(ADXL345_RANGE_16_G); //  yep 16 - reduces sensitivity
+    // Display some basic information on this sensor
+    displaySensorDetails();
+  }
+}
+
+sensors_event_t accelerometerRead(void)
+{
+  // Get a new sensor event 
+  sensors_event_t event; 
+  accel.getEvent(&event);
+  return event;
+}
+
+void displaySensorDetails(void)
+{
+  sensor_t sensor;
+  accel.getSensor(&sensor);
+  Serial.println("------------------------------------");
+  Serial.print  ("Sensor:       "); Serial.println(sensor.name);
+  Serial.print  ("Driver Ver:   "); Serial.println(sensor.version);
+  Serial.print  ("Unique ID:    "); Serial.println(sensor.sensor_id);
+  Serial.print  ("Max Value:    "); Serial.print(sensor.max_value); Serial.println(" m/s^2");
+  Serial.print  ("Min Value:    "); Serial.print(sensor.min_value); Serial.println(" m/s^2");
+  Serial.print  ("Resolution:   "); Serial.print(sensor.resolution); Serial.println(" m/s^2");  
+  Serial.println("------------------------------------");
+  Serial.println("");
+}
 
