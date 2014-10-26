@@ -32,9 +32,9 @@
 #define INPUT_DOWN_MED   -4
 #define INPUT_DOWN_FAST  -7
 
-#define PIN_LATCH    8  // ST_CP of 74HC595
-#define PIN_CLOCK    12 // SH_CP of 74HC595
-#define PIN_DATA     11 // DS of 74HC595
+#define PIN_LATCH    12  // ST_CP of 74HC595
+#define PIN_CLOCK    11 // SH_CP of 74HC595
+#define PIN_DATA     13 // DS of 74HC595
 #define PIN_DIGIT_0  A0  // Multiplex pin for the digit
 #define PIN_DIGIT_1  A1  // Multiplex pin for the digit
 #define PIN_DIGIT_2  A2  // Multiplex pin for the digit
@@ -68,7 +68,7 @@ int clockPin = PIN_CLOCK;
 //Pin connected to DS of 74HC595
 int dataPin = PIN_DATA;
 
-const byte digit_pins[DIGIT_COUNT] = {PIN_DIGIT_0, PIN_DIGIT_1, PIN_DIGIT_2, PIN_DIGIT_3};
+const byte digit_pins[DIGIT_COUNT] = {PIN_DIGIT_3, PIN_DIGIT_2, PIN_DIGIT_1, PIN_DIGIT_0};
 
 volatile int display_number = START_TIME; // the number currently being displayed.
 volatile byte current_digit = DIGIT_COUNT - 1; // The digit currently being shown in the multiplexing.

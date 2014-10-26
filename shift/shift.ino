@@ -27,16 +27,17 @@
 #define NUM_BLANK  B00000000 // ' '
 #define NUM_DOT    B00001000 // .
 
-#define COMPARE_REG 64 // OCR2A when to interupt (datasheet: 18.11.4)
+#define COMPARE_REG 32 // OCR2A when to interupt (datasheet: 18.11.4)
  
-//Pin connected to ST_CP of 74HC595
-int latchPin = 8;
-//Pin connected to SH_CP of 74HC595
-int clockPin = 12;
 //Pin connected to DS of 74HC595
-int dataPin = 11;
+int dataPin = 13;
+//Pin connected to ST_CP of 74HC595
+int latchPin = 12;
+//Pin connected to SH_CP of 74HC595
+int clockPin = 11;
 
-const byte digit_pins[DIGIT_COUNT] = {A0,A1,A2,A3};
+
+const byte digit_pins[DIGIT_COUNT] = {A3,A2,A1,A0};
 
 volatile int display_number = 8; // the number currently being displayed.
 volatile byte current_digit = DIGIT_COUNT - 1; // The digit currently being shown in the multiplexing.
