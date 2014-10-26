@@ -14,18 +14,18 @@
 
 #define DIGIT_COUNT 4 // 4 digit display
  
-#define NUM_0      B11111010 // 0
-#define NUM_1      B00100010 // 1
-#define NUM_2      B10111001 // 2
-#define NUM_3      B10101011 // 3
-#define NUM_4      B01100011 // 4
-#define NUM_5      B11001011 // 5
-#define NUM_6      B11011011 // 6
-#define NUM_7      B10100010 // 7
-#define NUM_8      B11111011 // 8
-#define NUM_9      B11101011 // 9
+#define NUM_0      B11110101 // 0
+#define NUM_1      B00000101 // 1
+#define NUM_2      B10110011 // 2
+#define NUM_3      B10010111 // 3
+#define NUM_4      B01000111 // 4
+#define NUM_5      B11010110 // 5
+#define NUM_6      B01110110 // 6
+#define NUM_7      B10000101 // 7
+#define NUM_8      B11110111 // 8
+#define NUM_9      B11000111 // 9
 #define NUM_BLANK  B00000000 // ' '
-#define NUM_DOT    B00000100 // .
+#define NUM_DOT    B00001000 // .
 
 #define COMPARE_REG 64 // OCR2A when to interupt (datasheet: 18.11.4)
  
@@ -36,9 +36,9 @@ int clockPin = 12;
 //Pin connected to DS of 74HC595
 int dataPin = 11;
 
-const byte digit_pins[DIGIT_COUNT] = {4,5,6,7};
+const byte digit_pins[DIGIT_COUNT] = {A0,A1,A2,A3};
 
-volatile int display_number; // the number currently being displayed.
+volatile int display_number = 8; // the number currently being displayed.
 volatile byte current_digit = DIGIT_COUNT - 1; // The digit currently being shown in the multiplexing.
 
 const byte digit_map[12] =      //seven segment digits in bits
@@ -86,7 +86,8 @@ void setup()
   multiplexInit();
   
   timer.setInterval(1000, updateTime);
-  //timer.setInterval(1000, updateDisplay);
+
+
 }
 
 void loop() 
