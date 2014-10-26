@@ -35,28 +35,29 @@
 #define PIN_LATCH    8  // ST_CP of 74HC595
 #define PIN_CLOCK    12 // SH_CP of 74HC595
 #define PIN_DATA     11 // DS of 74HC595
-#define PIN_DIGIT_0  7  // Multiplex pin for the digit
-#define PIN_DIGIT_1  6  // Multiplex pin for the digit
-#define PIN_DIGIT_2  5  // Multiplex pin for the digit
-#define PIN_DIGIT_3  4  // Multiplex pin for the digit
-
+#define PIN_DIGIT_0  A0  // Multiplex pin for the digit
+#define PIN_DIGIT_1  A1  // Multiplex pin for the digit
+#define PIN_DIGIT_2  A2  // Multiplex pin for the digit
+#define PIN_DIGIT_3  A3  // Multiplex pin for the digit
+#define PIN_BLUE     5   // PWM blue led
+#define PIN_RED      6   // PWM red led
 
 #define DIGIT_COUNT 4 // 4 digit display
  
-#define NUM_0      B11111010 // 0
-#define NUM_1      B00100010 // 1
-#define NUM_2      B10111001 // 2
-#define NUM_3      B10101011 // 3
-#define NUM_4      B01100011 // 4
-#define NUM_5      B11001011 // 5
-#define NUM_6      B11011011 // 6
-#define NUM_7      B10100010 // 7
-#define NUM_8      B11111011 // 8
-#define NUM_9      B11101011 // 9
+#define NUM_0      B11110101 // 0
+#define NUM_1      B00000101 // 1
+#define NUM_2      B10110011 // 2
+#define NUM_3      B10010111 // 3
+#define NUM_4      B01000111 // 4
+#define NUM_5      B11010110 // 5
+#define NUM_6      B01110110 // 6
+#define NUM_7      B10000101 // 7
+#define NUM_8      B11110111 // 8
+#define NUM_9      B11000111 // 9
 #define NUM_BLANK  B00000000 // ' '
-#define NUM_DOT    B00000100 // .
+#define NUM_DOT    B00001000 // .
 #define NUM_DASH   B00000001 // -
-#define NUM_ERROR  B10001001
+#define NUM_ERROR  B10010010
 
 #define COMPARE_REG 64 // OCR2A when to interupt (datasheet: 18.11.4)
  
@@ -67,7 +68,7 @@ int clockPin = PIN_CLOCK;
 //Pin connected to DS of 74HC595
 int dataPin = PIN_DATA;
 
-const byte digit_pins[DIGIT_COUNT] = {PIN_DIGIT_3, PIN_DIGIT_2, PIN_DIGIT_1, PIN_DIGIT_0};
+const byte digit_pins[DIGIT_COUNT] = {PIN_DIGIT_0, PIN_DIGIT_1, PIN_DIGIT_2, PIN_DIGIT_3};
 
 volatile int display_number = START_TIME; // the number currently being displayed.
 volatile byte current_digit = DIGIT_COUNT - 1; // The digit currently being shown in the multiplexing.
@@ -315,6 +316,7 @@ void stateRun()
   
   switch(timer_state) {
     case T_COUNTDOWN:
+      breath();
       break;
     
     case T_ALARM:
@@ -349,6 +351,7 @@ void stateRun()
       
       
     case T_SETTING:
+      breath(); // TEMP
       break;
       
     case T_OFF:
@@ -598,6 +601,18 @@ void updateDisplay()
   
   // Turn on the current digit
   digitalWrite(digit_pins[current_digit], LOW);
+}
+
+/**
+ * Indicate gently that everything is ok.
+ */
+void breath()
+{
+  // http://sean.voisen.org/blog/2011/10/breathing-led-with-arduino/
+  
+  float val = (exp(sin(millis()/6000.0*PI)) - 0.36787944)*108.0;
+  analogWrite(PIN_BLUE, val);
+  analogWrite(PIN_RED, val);
 }
 
 void goToSleep()
