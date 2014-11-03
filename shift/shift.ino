@@ -42,6 +42,10 @@ int latchPin = 12;
 //Pin connected to SH_CP of 74HC595
 int clockPin = 11;
 
+byte breath_r = 0;
+byte breath_g = 0;
+byte breath_b = 200;
+float breath_speed = 6000.0;
 
 const byte digit_pins[DIGIT_COUNT] = {A3,A2,A1,A0};
 
@@ -80,6 +84,10 @@ void setup()
   pinMode(PIN_GREEN, OUTPUT);
   pinMode(PIN_BLUE, OUTPUT);
   
+  digitalWrite(PIN_RED, HIGH);
+  digitalWrite(PIN_GREEN, HIGH);
+  digitalWrite(PIN_BLUE, HIGH);
+  
   pinMode(latchPin, OUTPUT);
   pinMode(clockPin, OUTPUT);
   pinMode(dataPin, OUTPUT);
@@ -103,13 +111,46 @@ void setup()
 void loop() 
 {
   timer.run();  
-  breath(6000.0, 0, 255, 80);
+  
+  //breath(500.0, 255, 0, 0); // alarm
+  
+  //breath(2000.0, 255,128, 0); // yellowy orange - near alarm
+  
+  //breath(4000.0, 0, 255, 30); // 3rd in
+  
+  //breath(6000.0, 0, 0, 200); // just started
+  
+  breath(breath_speed, breath_r, breath_g, breath_b);
+  
 }
 
 void updateTime()
 {
   display_number = millis() / 1000;
-  Serial.println(display_number);
+  
+  if (display_number < 60) {
+    breath_speed = 6000.0;
+    breath_r = 0;
+    breath_g = 0;
+    breath_b = 200;
+  } else if (display_number < 120) {
+    breath_speed = 4000.0;
+    breath_r = 0;
+    breath_g = 255;
+    breath_b = 30;
+  } else if (display_number < 180) {
+    breath_speed = 2000.0;
+    breath_r = 255;
+    breath_g = 128;
+    breath_b = 0;
+  } else {
+    breath_speed = 500.0;
+    breath_r = 255;
+    breath_g = 0;
+    breath_b = 0;
+  }
+  
+  //Serial.println(display_number);
   
   //sprintf(digits, "%04d", now);
   //Serial.println(digits);
@@ -204,9 +245,21 @@ void breath(float breath_speed, byte red, byte green, byte blue)
   // http://sean.voisen.org/blog/2011/10/breathing-led-with-arduino/
   
   float val = (exp(sin(millis()/ breath_speed *PI)) - 0.36787944)*108.0;
-  analogWrite(PIN_RED, map(val, 0, 255, 0, red));
-  analogWrite(PIN_GREEN, map(val, 0, 255, 0, green));
-  analogWrite(PIN_BLUE, map(val, 0, 255, 0, blue));
+  
+  // inverse because common anode. HIGH is off
+  byte val_r = 255 - (map(val, 0, 255, 0, red));
+  byte val_g = 255 - (map(val, 0, 255, 0, green));
+  byte val_b = 255 - (map(val, 0, 255, 0, blue));
+  
+  analogWrite(PIN_RED, val_r);
+  analogWrite(PIN_GREEN, val_g);
+  analogWrite(PIN_BLUE, val_b);
+  
+  //analogWrite(PIN_RED, 255-red);
+  //analogWrite(PIN_GREEN, 255-green);
+  //analogWrite(PIN_BLUE, 255-blue);
+  
+  //analogWrite(PIN_RED, 255-val);
   
 }
 
