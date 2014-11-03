@@ -28,6 +28,12 @@
 #define NUM_DOT    B00001000 // .
 
 #define COMPARE_REG 32 // OCR2A when to interupt (datasheet: 18.11.4)
+
+#define PIN_RED      5   // PWM red led
+#define PIN_GREEN    6   // PWM green led
+#define PIN_BLUE     9   // PWM blue led
+
+
  
 //Pin connected to DS of 74HC595
 int dataPin = 13;
@@ -70,6 +76,9 @@ void setup()
 {
   Serial.begin(9600);
   
+  pinMode(PIN_RED, OUTPUT);
+  pinMode(PIN_GREEN, OUTPUT);
+  pinMode(PIN_BLUE, OUTPUT);
   
   pinMode(latchPin, OUTPUT);
   pinMode(clockPin, OUTPUT);
@@ -94,6 +103,7 @@ void setup()
 void loop() 
 {
   timer.run();  
+  breath(6000.0, 0, 255, 80);
 }
 
 void updateTime()
@@ -183,6 +193,20 @@ void multiplexInit(void)
   TIMSK2 |= (1 << OCIE2A);
   
   sei();//allow interrupts
+  
+}
+
+/**
+ * Gently change the led
+ */
+void breath(float breath_speed, byte red, byte green, byte blue)
+{
+  // http://sean.voisen.org/blog/2011/10/breathing-led-with-arduino/
+  
+  float val = (exp(sin(millis()/ breath_speed *PI)) - 0.36787944)*108.0;
+  analogWrite(PIN_RED, map(val, 0, 255, 0, red));
+  analogWrite(PIN_GREEN, map(val, 0, 255, 0, green));
+  analogWrite(PIN_BLUE, map(val, 0, 255, 0, blue));
   
 }
 
