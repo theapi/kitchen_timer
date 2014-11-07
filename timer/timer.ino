@@ -39,8 +39,9 @@
 #define PIN_DIGIT_1  A1  // Multiplex pin for the digit
 #define PIN_DIGIT_2  A2  // Multiplex pin for the digit
 #define PIN_DIGIT_3  A3  // Multiplex pin for the digit
-#define PIN_BLUE     5   // PWM blue led
-#define PIN_RED      6   // PWM red led
+#define PIN_RED      5   // PWM red led
+#define PIN_GREEN    6   // PWM green led
+#define PIN_BLUE     9   // PWM blue led
 
 #define DIGIT_COUNT 4 // 4 digit display
  
@@ -142,6 +143,15 @@ void ISR_activity()
 void setup() 
 {
   Serial.begin(9600);
+  
+  pinMode(PIN_RED, OUTPUT);
+  pinMode(PIN_GREEN, OUTPUT);
+  pinMode(PIN_BLUE, OUTPUT);
+  
+  // Ensure the led is OFF (common anode)
+  digitalWrite(PIN_RED, HIGH);
+  digitalWrite(PIN_GREEN, HIGH);
+  digitalWrite(PIN_BLUE, HIGH);
 
   pinMode(2, INPUT); // External interrupt
 
@@ -153,7 +163,7 @@ void setup()
   
   for (int i = 0; i < DIGIT_COUNT; i++) {
     pinMode(digit_pins[i], OUTPUT);
-    // Set high to be OFF (common cathode)
+    // Set high to be OFF (common anode)
     digitalWrite(digit_pins[i], HIGH);
   }
   
