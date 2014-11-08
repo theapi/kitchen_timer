@@ -60,7 +60,7 @@
 #define NUM_DASH   B00000001 // -
 #define NUM_ERROR  B10010010
 
-#define COMPARE_REG 64 // OCR2A when to interupt (datasheet: 18.11.4)
+#define COMPARE_REG 32 // OCR2A when to interupt (datasheet: 18.11.4)
  
 //Pin connected to ST_CP of 74HC595
 int latchPin = PIN_LATCH;
@@ -70,6 +70,11 @@ int clockPin = PIN_CLOCK;
 int dataPin = PIN_DATA;
 
 const byte digit_pins[DIGIT_COUNT] = {PIN_DIGIT_3, PIN_DIGIT_2, PIN_DIGIT_1, PIN_DIGIT_0};
+
+byte breath_r = 0;
+byte breath_g = 0;
+byte breath_b = 200;
+float breath_speed = 6000.0;
 
 volatile int display_number = START_TIME; // the number currently being displayed.
 volatile byte current_digit = DIGIT_COUNT - 1; // The digit currently being shown in the multiplexing.
@@ -119,6 +124,7 @@ SimpleTimer timer;
 int timer_dot_blink;
 int timer_dot_move;
 int timer_countdown;
+int timer_colour;
 
 unsigned long setting_none_time = 0;
 unsigned long alarm_start; // When the alarm started
@@ -181,6 +187,7 @@ void setup()
   // Countdown with a minute resolution.
   timer_countdown = timer.setInterval(60000, countdownUpdate);
   
+  timer_colour = timer.setInterval(1000, colourSet);
  
   settingStart();
   
@@ -326,7 +333,7 @@ void stateRun()
   
   switch(timer_state) {
     case T_COUNTDOWN:
-      breath();
+      breath(breath_speed, breath_r, breath_g, breath_b);
       break;
     
     case T_ALARM:
@@ -361,7 +368,10 @@ void stateRun()
       
       
     case T_SETTING:
-      breath(); // TEMP
+      //breath(); // TEMP
+      analogWrite(PIN_RED, 22);
+      analogWrite(PIN_GREEN, 255);
+      analogWrite(PIN_BLUE, 22);
       break;
       
     case T_OFF:
@@ -381,6 +391,34 @@ void settingStart()
   if (timer_state == T_ERROR) return;
   
   timer_state = T_SETTING;
+}
+
+void colourSet()
+{
+  if (timer_state == T_COUNTDOWN) {
+    if (display_number > 3) {
+      breath_speed = 6000.0;
+      breath_r = 0;
+      breath_g = 0;
+      breath_b = 255;
+    } else if (display_number > 2) {
+      breath_speed = 4000.0;
+      breath_r = 0;
+      breath_g = 255;
+      breath_b = 30;
+    } else if (display_number > 1) {
+      breath_speed = 2000.0;
+      breath_r = 255;
+      breath_g = 128;
+      breath_b = 0;
+    } else {
+      // Alarm
+      breath_speed = 500.0;
+      breath_r = 255;
+      breath_g = 0;
+      breath_b = 0;
+    }
+  }
 }
 
 void countdownStart()
@@ -616,6 +654,7 @@ void updateDisplay()
 /**
  * Indicate gently that everything is ok.
  */
+ /*
 void breath()
 {
   // http://sean.voisen.org/blog/2011/10/breathing-led-with-arduino/
@@ -623,6 +662,33 @@ void breath()
   float val = (exp(sin(millis()/6000.0*PI)) - 0.36787944)*108.0;
   analogWrite(PIN_BLUE, val);
   analogWrite(PIN_RED, val);
+}
+*/
+
+/**
+ * Gently change the led
+ */
+void breath(float breath_speed, byte red, byte green, byte blue)
+{
+  // http://sean.voisen.org/blog/2011/10/breathing-led-with-arduino/
+  
+  float val = (exp(sin(millis()/ breath_speed *PI)) - 0.36787944)*108.0;
+  val = map(val, 0, 255, 50, 255);
+  // inverse because common anode. HIGH is off
+  byte val_r = 255 - (map(val, 0, 255, 0, red));
+  byte val_g = 255 - (map(val, 0, 255, 0, green));
+  byte val_b = 255 - (map(val, 0, 255, 0, blue));
+  
+  analogWrite(PIN_RED,   val_r);
+  analogWrite(PIN_GREEN, val_g);
+  analogWrite(PIN_BLUE,  val_b);
+  
+  //analogWrite(PIN_RED, 255-red);
+  //analogWrite(PIN_GREEN, 255-green);
+  //analogWrite(PIN_BLUE, 255-blue);
+  
+  //analogWrite(PIN_RED, 255-val);
+  
 }
 
 void goToSleep()

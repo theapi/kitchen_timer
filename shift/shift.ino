@@ -33,7 +33,6 @@
 #define PIN_GREEN    6   // PWM green led
 #define PIN_BLUE     9   // PWM blue led
 
-
  
 //Pin connected to DS of 74HC595
 int dataPin = 13;
@@ -49,7 +48,7 @@ float breath_speed = 6000.0;
 
 const byte digit_pins[DIGIT_COUNT] = {A3,A2,A1,A0};
 
-volatile int display_number = 8; // the number currently being displayed.
+volatile int display_number = 1234; // the number currently being displayed.
 volatile byte current_digit = DIGIT_COUNT - 1; // The digit currently being shown in the multiplexing.
 
 const byte digit_map[12] =      //seven segment digits in bits
