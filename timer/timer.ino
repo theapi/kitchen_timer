@@ -76,6 +76,7 @@ byte breath_g = 0;
 byte breath_b = 200;
 float breath_speed = 6000.0;
 
+volatile int display_volts; // The volt reading to show when requested.
 volatile int display_number = START_TIME; // the number currently being displayed.
 volatile byte current_digit = DIGIT_COUNT - 1; // The digit currently being shown in the multiplexing.
 
@@ -179,7 +180,7 @@ void setup()
   attachInterrupt(0, ISR_activity, HIGH);
   
   
-  timer.setInterval(200, inputTime);
+  timer.setInterval(200, accelerometerMonitor);
 
   timer_dot_blink = timer.setInterval(500, dotBlink);
   // Move the dot every 15 seconds
@@ -474,43 +475,7 @@ void timersDisable()
   timer.disable(timer_countdown);
 }
 
-void inputTime()
-{
-  sensors_event_t event = accelerometerRead(); 
-  int val = event.acceleration.x; // chop to an int
 
-  if (val >= INPUT_UP_FAST) {
-    timer_state = T_SETTING;
-    setting_state = S_INCREASE_FAST;
-  } else if (val >= INPUT_UP_MED) {
-    timer_state = T_SETTING;
-    setting_state = S_INCREASE_MED;
-  } else if (val >= INPUT_UP_SLOW) {
-    timer_state = T_SETTING;
-    setting_state = S_INCREASE_SLOW;
-  } else if (val >= INPUT_DOWN_SLOW) {
-    
-    setting_state = S_NONE;
-    
-    
-  } else if (val >= INPUT_DOWN_MED) {
-    timer_state = T_SETTING;
-    setting_state = S_REDUCE_SLOW;
-  } else if (val >= INPUT_DOWN_FAST) {
-    timer_state = T_SETTING;
-    setting_state = S_REDUCE_MED;
-  } else {
-    timer_state = T_SETTING;
-    setting_state = S_REDUCE_FAST;
-  }
-  
-/*
-  Serial.print(val);
-  Serial.print(" ");
-  Serial.println(setting_state);
-  Serial.flush();
-  */
-}
 
 /**
  * Blink dot to show activity.
@@ -575,6 +540,40 @@ void updateDisplay()
   } else if (timer_state == T_ALARM) {
     // All digits as dashes
     data = NUM_DASH;
+  } else if (display_volts > 0) {
+    
+    int i;
+    switch (current_digit) {
+      case 0:
+        if (display_volts < 1000) {
+          // Show a blank rather than a leading zero.
+          i = 10;
+        } else {
+          i = display_volts % 10000 / 1000;
+        }
+        break;
+      case 1:
+        if (display_volts < 100) {
+          // Show a blank rather than a leading zero.
+          i = 10;
+        } else {
+          i = display_volts % 1000 / 100;
+        }
+        break;
+      case 2:
+        if (display_volts < 10) {
+          // Show a blank rather than a leading zero.
+          i = 10;
+        } else {
+          i = display_volts % 100 / 10;
+        }
+        break;
+      case 3:
+        i = display_volts % 10;
+        break;
+    }
+    data = digit_map[i];
+    
   } else {
  
     int i;
@@ -900,5 +899,85 @@ void displaySensorDetails(void)
   Serial.print  ("Resolution:   "); Serial.print(sensor.resolution); Serial.println(" m/s^2");  
   Serial.println("------------------------------------");
   Serial.println("");
+}
+
+/**
+ * Act on accelerometer readings
+ */
+void accelerometerMonitor()
+{
+  sensors_event_t event = accelerometerRead(); 
+  int val = event.acceleration.x; // chop to an int
+  int val_y = event.acceleration.y; // chop to an int
+  
+  display_volts = 0;
+  if (val_y <= -10) {
+    long vcc = readVcc();
+    display_volts = vcc;
+  } else {
+
+    if (val >= INPUT_UP_FAST) {
+      timer_state = T_SETTING;
+      setting_state = S_INCREASE_FAST;
+    } else if (val >= INPUT_UP_MED) {
+      timer_state = T_SETTING;
+      setting_state = S_INCREASE_MED;
+    } else if (val >= INPUT_UP_SLOW) {
+      timer_state = T_SETTING;
+      setting_state = S_INCREASE_SLOW;
+    } else if (val >= INPUT_DOWN_SLOW) {
+      
+      setting_state = S_NONE;
+      
+      
+    } else if (val >= INPUT_DOWN_MED) {
+      timer_state = T_SETTING;
+      setting_state = S_REDUCE_SLOW;
+    } else if (val >= INPUT_DOWN_FAST) {
+      timer_state = T_SETTING;
+      setting_state = S_REDUCE_MED;
+    } else {
+      timer_state = T_SETTING;
+      setting_state = S_REDUCE_FAST;
+    }
+  }
+  
+/*
+  Serial.print(val_y);
+  Serial.print(" ");
+  Serial.println(setting_state);
+  Serial.flush();
+*/  
+}
+
+/**
+ * Read the internal voltage.
+ * NB this can take yo long and cause the display to ficker.
+ */
+long readVcc() 
+{
+  // Read 1.1V reference against AVcc
+  // set the reference to Vcc and the measurement to the internal 1.1V reference
+  #if defined(__AVR_ATmega32U4__) || defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__)
+    ADMUX = _BV(REFS0) | _BV(MUX4) | _BV(MUX3) | _BV(MUX2) | _BV(MUX1);
+  #elif defined (__AVR_ATtiny24__) || defined(__AVR_ATtiny44__) || defined(__AVR_ATtiny84__)
+    ADMUX = _BV(MUX5) | _BV(MUX0);
+  #elif defined (__AVR_ATtiny25__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny85__)
+    ADMUX = _BV(MUX3) | _BV(MUX2);
+  #else
+    ADMUX = _BV(REFS0) | _BV(MUX3) | _BV(MUX2) | _BV(MUX1);
+  #endif  
+ 
+  //delay(2); // Wait for Vref to settle
+  ADCSRA |= _BV(ADSC); // Start conversion
+  while (bit_is_set(ADCSRA,ADSC)); // measuring
+ 
+  uint8_t low  = ADCL; // must read ADCL first - it then locks ADCH  
+  uint8_t high = ADCH; // unlocks both
+ 
+  long result = (high<<8) | low;
+ 
+  result = 1125300L / result; // Calculate Vcc (in mV); 1125300 = 1.1*1023*1000
+  return result; // Vcc in millivolts
 }
 
