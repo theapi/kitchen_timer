@@ -3,21 +3,36 @@
  */
 
 /**
- * Start a non blocking read of the internal voltage ref.
+ * Checks to see if the ADC is on.
  */
-void batteryStartReading()
+byte batteryAdcIsOn()
 {
-  // Power up the ADC.
-  ADCSRA |= (1 << ADEN);
-  
-  
+  return bit_is_set(ADCSRA, ADEN);
+}
+
+/**
+ * Get the ADC ready.
+ * needs to "warm up" (datasheet: 23.5.2) as we are using the bandgap reference.
+ * "The first ADC conversion result after switching reference voltage source may be inaccurate"
+ */
+void batteryAdcOn()
+{
   // Read 1.1V reference against AVcc
   // set the reference to Vcc and the measurement to the internal 1.1V reference
   ADMUX = (1 << REFS0) | (1 << MUX3) | (1 << MUX2) | (1 << MUX1);
   
+  // Power up the ADC, default values: no interrupts etc.
+  ADCSRA = (1 << ADEN);
+}
+
+
+/**
+ * Start a non blocking read of the internal voltage ref.
+ */
+void batteryStartReading()
+{
   // Start conversion
   ADCSRA |= (1 << ADSC); 
-  
 }
 
 /**
@@ -26,6 +41,7 @@ void batteryStartReading()
  */
 long batteryRead()
 {
+  // ADSC will read as one as long as a conversion is in progress. (Datasheet: 23.9.2)
   if (bit_is_set(ADCSRA, ADSC)) {
     return 0; 
   }
@@ -33,9 +49,6 @@ long batteryRead()
   uint8_t low  = ADCL; // must read ADCL first - it then locks ADCH  
   uint8_t high = ADCH; // unlocks both
   long result = (high<<8) | low;
-  
-  // Turn off ADC to conserve power
-  batteryEnsureAdcOff(); // LOW
  
   result = 1125300L / result; // Calculate Vcc (in mV); 1125300 = 1.1*1023*1000
   return result; // Vcc in millivolts

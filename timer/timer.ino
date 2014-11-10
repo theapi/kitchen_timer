@@ -151,6 +151,9 @@ void ISR_activity()
 
 void setup() 
 {
+  // Turn ADC off
+  batteryEnsureAdcOff(); 
+  
   Serial.begin(9600);
   
   pinMode(PIN_RED, OUTPUT);
@@ -181,8 +184,8 @@ void setup()
   
   attachInterrupt(0, ISR_activity, HIGH);
   
-  
-  timer.setInterval(200, accelerometerMonitor);
+  // Check the accelerometer.
+  timer.setInterval(100, accelerometerMonitor);
 
   timer_dot_blink = timer.setInterval(500, dotBlink);
   // Move the dot every 15 seconds
@@ -221,6 +224,8 @@ void timersDisable()
 void goToSleep()
 {
   timer_state = T_OFF;
+  
+  batteryEnsureAdcOff();
   timersDisable();
 
   // Turn off the display 

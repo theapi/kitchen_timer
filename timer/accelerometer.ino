@@ -147,17 +147,25 @@ void accelerometerMonitor()
   
   display_volts = 0;
   if (val_y <= -10) {   
-    long vcc = batteryRead();
-    if (vcc) {
-      display_volts = vcc;
+    
+    if (!batteryAdcIsOn()) {
+      // Turn the ADC on so its ready for next time round to make a reading.
+      batteryAdcOn();
     } else {
-      batteryStartReading();
+      long vcc = batteryRead();
+      if (vcc) {
+        display_volts = vcc;
+      } else {
+        batteryStartReading();
+      }
     }
     
   } else {
 
     // Ensure the power hungry ADC is off.
-    batteryEnsureAdcOff(); 
+    if (batteryAdcIsOn()) {
+      batteryEnsureAdcOff(); 
+    }
     
     if (val >= INPUT_UP_FAST) {
       timer_state = T_SETTING;
