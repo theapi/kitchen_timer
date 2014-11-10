@@ -21,8 +21,8 @@ void batteryAdcOn()
   // set the reference to Vcc and the measurement to the internal 1.1V reference
   ADMUX = (1 << REFS0) | (1 << MUX3) | (1 << MUX2) | (1 << MUX1);
   
-  // Power up the ADC, default values: no interrupts etc.
-  ADCSRA = (1 << ADEN);
+  // Power up the ADC, default values: no interrupts etc BUT flag when conversion complete.
+  ADCSRA = (1 << ADEN) | (1 << ADIF);
 }
 
 
@@ -36,21 +36,39 @@ void batteryStartReading()
 }
 
 /**
+ * ADSC will read as one as long as a conversion is in progress. (Datasheet: 23.9.2)
+ */
+byte batteryIsReading()
+{
+  return bit_is_set(ADCSRA, ADSC);
+}
+
+/**
+ * One when a conversion has completed.
+ */ 
+byte batteryReadComplete()
+{
+  // This bit is set when an ADC conversion completes and the Data Registers are updated
+  // (datasheet: 23.9.2)
+  return bit_is_set(ADCSRA, ADIF);
+}
+
+/**
  * Read the result, if available.
  * Returns 0 if still measuring.
  */
 long batteryRead()
 {
-  // ADSC will read as one as long as a conversion is in progress. (Datasheet: 23.9.2)
-  if (bit_is_set(ADCSRA, ADSC)) {
-    return 0; 
-  }
-  
   uint8_t low  = ADCL; // must read ADCL first - it then locks ADCH  
   uint8_t high = ADCH; // unlocks both
   long result = (high<<8) | low;
  
   result = 1125300L / result; // Calculate Vcc (in mV); 1125300 = 1.1*1023*1000
+  
+  // Clear the conversion complete flag.
+  // "ADIF is cleared by writing a logical one to the flag" (datasheet: 23.9.2)
+  ADCSRA &= ~(1 << ADIF); // write 0 to flag to clear it
+  
   return result; // Vcc in millivolts
 }
 

@@ -152,8 +152,8 @@ void accelerometerMonitor()
       // Turn the ADC on so its ready for next time round to make a reading.
       batteryAdcOn();
     } else {
-      long vcc = batteryRead();
-      if (vcc) {
+      if (batteryReadComplete()) {
+        long vcc = batteryRead();
         display_volts = vcc;
       } else {
         batteryStartReading();
