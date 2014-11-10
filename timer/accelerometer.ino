@@ -143,14 +143,25 @@ void accelerometerMonitor()
 {
   sensors_event_t event = accelerometerRead(); 
   int val = event.acceleration.x; // chop to an int
-  int val_y = event.acceleration.y; // chop to an int
+  val_y = event.acceleration.y; // chop to an int
   
   display_volts = 0;
   if (val_y <= -10) {
     long vcc = batteryReadVcc();
     display_volts = vcc;
+    
+    long vcc = batteryRead()
+    if (vcc) {
+      display_volts = vcc;
+    } else {
+      batteryStartReading();
+    }
+    
   } else {
 
+    // Ensure the power hungry ADC is off.
+    batteryEnsureAdcOff(); 
+    
     if (val >= INPUT_UP_FAST) {
       timer_state = T_SETTING;
       setting_state = S_INCREASE_FAST;

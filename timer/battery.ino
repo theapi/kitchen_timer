@@ -3,6 +3,49 @@
  */
 
 /**
+ * Start a non blocking read of the internal voltage ref.
+ */
+void batteryStartReading()
+{
+  // Power up the ADC.
+  ADCSRA |= (1 << ADEN);
+  
+  
+  // Read 1.1V reference against AVcc
+  // set the reference to Vcc and the measurement to the internal 1.1V reference
+  ADMUX = (1 << REFS0) | (1 << MUX3) | (1 << MUX2) | (1 << MUX1);
+  
+  // Start conversion
+  ADCSRA |= (1 << ADSC); 
+  
+}
+
+/**
+ * Read the result, if available.
+ * Returns 0 if still measuring.
+ */
+long batteryRead()
+{
+  if (bit_is_set(ADCSRA, ADSC)) {
+    return 0; 
+  }
+  
+  uint8_t low  = ADCL; // must read ADCL first - it then locks ADCH  
+  uint8_t high = ADCH; // unlocks both
+  long result = (high<<8) | low;
+  
+  // Turn off ADC to conserve power
+  batteryEnsureAdcOff(); // LOW
+ 
+  result = 1125300L / result; // Calculate Vcc (in mV); 1125300 = 1.1*1023*1000
+  return result; // Vcc in millivolts
+}
+
+void batteryEnsureAdcOff() {
+  ADCSRA = 0;
+}
+
+/**
  * Read the internal voltage.
  * NB this can take too long and cause the display to ficker.
  */
