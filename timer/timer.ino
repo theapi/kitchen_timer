@@ -223,12 +223,16 @@ void goToSleep()
   timer_state = T_OFF;
   timersDisable();
 
-  // Turn off the display - @todo: output enable on shift register to turn off display
+  // Turn off the display 
   for (int i = 0; i < DIGIT_COUNT; i++) {
-    //pinMode(digit_pins[i], OUTPUT);
-    // Set high to be OFF (common cathode)
-    digitalWrite(digit_pins[i], HIGH); // @todo is high using power here?
+    // Set high to be OFF (common anode)
+    digitalWrite(digit_pins[i], HIGH); 
   }
+  
+  // Ensure the led is OFF (common anode)
+  digitalWrite(PIN_RED, HIGH);
+  digitalWrite(PIN_GREEN, HIGH);
+  digitalWrite(PIN_BLUE, HIGH);
   
   digitalWrite(13, LOW);
 
