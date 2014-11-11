@@ -88,6 +88,8 @@ void stateRun()
         } else if (now - setting_none_time > SETTING_WAIT) {
           setting_none_time = 0;
           setting_update_last = 0;
+          powerDown();
+          /*
           // Turn off
           Serial.println("Sleep now");
           Serial.flush();
@@ -97,6 +99,7 @@ void stateRun()
           Serial.flush();
           // Wake up, and start a new count down.
           settingStart();
+          */
         }
       }
       
@@ -159,8 +162,8 @@ void stateRun()
         if (finished_sound && finished_light) {
           timer_state = T_OFF;
           alarm_start = 0;
-          goToSleep();
-          timer_state = T_WOKE;
+          //goToSleep();
+          //timer_state = T_WOKE;
         }
         
       }
@@ -168,13 +171,15 @@ void stateRun()
       
       
     case T_SETTING:
-      //breath(); // TEMP
       analogWrite(PIN_RED, 22);
       analogWrite(PIN_GREEN, 255);
       analogWrite(PIN_BLUE, 22);
       break;
       
     case T_OFF:
+      powerDown();
+      // Wake up
+      timer_state = T_WOKE;
       break;
       
     case T_WOKE:

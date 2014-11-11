@@ -221,7 +221,7 @@ void timersDisable()
   timer.disable(timer_countdown);
 }
 
-void goToSleep()
+void powerDown()
 {
   timer_state = T_OFF;
   

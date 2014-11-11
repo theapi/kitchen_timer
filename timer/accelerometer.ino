@@ -146,8 +146,13 @@ void accelerometerMonitor()
   int val_y = event.acceleration.y; // chop to an int
   
   display_volts = 0;
-  if (val_y <= -10) {   
-    
+  
+  if (val_y >= 10) {
+    // Tilt 90 degrees forward, turn off.
+    timer_state = T_OFF;
+  
+  } else if (val_y <= -10) {   
+    // Tilt 90 degrees backward, show voltmeter.
     if (!batteryAdcIsOn()) {
       // Turn the ADC on so its ready for next time round to make a reading.
       batteryAdcOn();
