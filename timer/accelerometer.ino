@@ -68,8 +68,9 @@ void accelerometerSetup(void)
     */
     
     
-    accel.writeRegister(ADXL345_REG_INT_MAP, B00001000); // all interrupts on INT1, except inactivity
     
+    accel.writeRegister(ADXL345_REG_INT_MAP, B00001000); // all interrupts on INT1, except inactivity
+    //accel.writeRegister(ADXL345_REG_INT_MAP, B00000000);
       
     // free fall configuration
     accel.writeRegister(ADXL345_REG_TIME_FF, 0x14); // set free fall time
@@ -85,17 +86,17 @@ void accelerometerSetup(void)
     accel.writeRegister(ADXL345_REG_WINDOW, 0xFF);
     
     // inactivity configuration - 0 for inactive as soon as no movement
-    accel.writeRegister(ADXL345_REG_TIME_INACT, 0); // 1s / LSB
+    accel.writeRegister(ADXL345_REG_TIME_INACT, 1); // 1s / LSB
     accel.writeRegister(ADXL345_REG_THRESH_INACT, 1); // 62.5mg / LSB
     // also working good with high movements: R_TIME_INACT=5, R_THRESH_INACT=16, R_ACT_INACT_CTL=B8(00000111)
     // but unusable for a quite slow movements
     
     // activity configuration
-    accel.writeRegister(ADXL345_REG_THRESH_ACT, 4); // 62.5mg / LSB
+    accel.writeRegister(ADXL345_REG_THRESH_ACT, 2); // 62.5mg / LSB
     
     // activity and inctivity control
-    accel.writeRegister(ADXL345_REG_ACT_INACT_CTL, B01110111); // enable activity and inactivity detection on x,y,z using dc
-    
+    //accel.writeRegister(ADXL345_REG_ACT_INACT_CTL, B01110111); // enable activity and inactivity detection on x,y,z using dc
+    accel.writeRegister(ADXL345_REG_ACT_INACT_CTL, B11111111); // ac
    
     // set the ADXL345 in measurement and sleep Mode: this will save power while while we will still be able to detect activity
     // set the Link bit to 1 so that the activity and inactivity functions aren't concurrent but alternatively activated
@@ -108,8 +109,8 @@ void accelerometerSetup(void)
     int bwRate = accel.readRegister(ADXL345_REG_BW_RATE);
     accel.writeRegister(ADXL345_REG_BW_RATE, bwRate & B00001010); // 100 Hz 50uA
     
+    
     accel.writeRegister(ADXL345_REG_INT_ENABLE, B1111100); // enable single and double tap, activity, inactivity and free fall detection
-  
 
     
     //accelerometerStartMeasuring();
@@ -208,7 +209,7 @@ void accelerometerMonitor()
   Serial.print(" ");
   Serial.println(setting_state);
   Serial.flush();
-*/  
+*/
 }
 
 #endif

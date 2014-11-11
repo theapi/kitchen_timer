@@ -19,6 +19,7 @@ void stateRun()
     
     // Inactivity gets sent to the unused INT2 pin so we can ignore it.
     // It still needs to be fired by the ADXL345 so it can set itselt to low power mode
+    // It will alos be in the interruptSource even though it was not interrupted on this pin.
     /*
     if (interruptSource & ACCEL_INACTIVITY) {
       Serial.println("### Inactivity");
@@ -83,18 +84,7 @@ void stateRun()
         } else if (now - setting_none_time > SETTING_WAIT) {
           //setting_none_time = 0;
           //setting_update_last = 0;
-          powerDown();
-          /*
-          // Turn off
-          Serial.println("Sleep now");
-          Serial.flush();
-          goToSleep(); 
-          
-          Serial.println("Wake now");
-          Serial.flush();
-          // Wake up, and start a new count down.
-          settingStart();
-          */
+          timer_state = T_OFF;
         }
       }
       
@@ -157,8 +147,6 @@ void stateRun()
         if (finished_sound && finished_light) {
           timer_state = T_OFF;
           alarm_start = 0;
-          //goToSleep();
-          //timer_state = T_WOKE;
         }
         
       }
@@ -172,9 +160,14 @@ void stateRun()
       break;
       
     case T_OFF:
-      powerDown();
+      // Turn off
+      Serial.println("Sleep now");
+      Serial.flush();
+      goToSleep();
       // Wake up
       timer_state = T_WOKE;
+      Serial.println("Wake now");
+      Serial.flush();
       break;
       
     case T_WOKE:
@@ -189,4 +182,6 @@ void stateRun()
     case T_ERROR:
       break;
   } 
+  
+  interruptSource = 0;
 }

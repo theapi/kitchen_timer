@@ -22,7 +22,7 @@
 #define ALARM_SOUND_SECONDS 30 * 1000L // How long for the sound alarm
 #define ALARM_LIGHT_SECONDS 60 * 1000L // How long for the light alarm
 
-#define SETTING_WAIT       60 * 1000L // How long to wait for a setting confirmation
+#define SETTING_WAIT       30 * 1000L // How long to wait for a setting confirmation
  
 // Inputs from the accelerometer for setting the time
 #define INPUT_UP_FAST     7
@@ -224,7 +224,7 @@ void timersDisable()
   timer.disable(timer_countdown);
 }
 
-void powerDown()
+void goToSleep()
 {
   timer_state = T_OFF;
   
