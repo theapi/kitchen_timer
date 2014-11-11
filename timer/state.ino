@@ -157,6 +157,10 @@ void stateRun()
       analogWrite(PIN_RED, 22);
       analogWrite(PIN_GREEN, 255);
       analogWrite(PIN_BLUE, 22);
+      
+      if (interruptSource & ACCEL_SINGLE_TAP) {
+        countdownStart();
+      }
       break;
       
     case T_OFF:
@@ -171,8 +175,7 @@ void stateRun()
       break;
       
     case T_WOKE:
-      if ((interruptSource & ACCEL_DOUBLE_TAP) && (timer_state == T_SETTING)) {
-        // Double tap & setting mode
+      if ((interruptSource & ACCEL_SINGLE_TAP) && (timer_state == T_SETTING)) {
         countdownStart();
       } else {
         settingStart();

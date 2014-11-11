@@ -178,29 +178,32 @@ void accelerometerMonitor()
       batteryEnsureAdcOff(); 
     }
     
-    if (val >= INPUT_UP_FAST) {
-      timer_state = T_SETTING;
-      setting_state = S_INCREASE_FAST;
-    } else if (val >= INPUT_UP_MED) {
-      timer_state = T_SETTING;
-      setting_state = S_INCREASE_MED;
-    } else if (val >= INPUT_UP_SLOW) {
-      timer_state = T_SETTING;
-      setting_state = S_INCREASE_SLOW;
-    } else if (val >= INPUT_DOWN_SLOW) {
-      
-      setting_state = S_NONE;
-      
-      
-    } else if (val >= INPUT_DOWN_MED) {
-      timer_state = T_SETTING;
-      setting_state = S_REDUCE_SLOW;
-    } else if (val >= INPUT_DOWN_FAST) {
-      timer_state = T_SETTING;
-      setting_state = S_REDUCE_MED;
-    } else {
-      timer_state = T_SETTING;
-      setting_state = S_REDUCE_FAST;
+    if (timer_state == T_SETTING) {
+    
+      if (val >= INPUT_UP_FAST) {
+        //timer_state = T_SETTING;
+        setting_state = S_INCREASE_FAST;
+      } else if (val >= INPUT_UP_MED) {
+        //timer_state = T_SETTING;
+        setting_state = S_INCREASE_MED;
+      } else if (val >= INPUT_UP_SLOW) {
+        //timer_state = T_SETTING;
+        setting_state = S_INCREASE_SLOW;
+      } else if (val >= INPUT_DOWN_SLOW) {
+        
+        setting_state = S_NONE;
+        
+        
+      } else if (val >= INPUT_DOWN_MED) {
+        //timer_state = T_SETTING;
+        setting_state = S_REDUCE_SLOW;
+      } else if (val >= INPUT_DOWN_FAST) {
+        //timer_state = T_SETTING;
+        setting_state = S_REDUCE_MED;
+      } else {
+        //timer_state = T_SETTING;
+        setting_state = S_REDUCE_FAST;
+      }
     }
   }
   
