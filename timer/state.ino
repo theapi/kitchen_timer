@@ -41,82 +41,84 @@ void stateRun()
     interrupt_flag = 0; 
   }
   
-  
-  if (setting_state != S_NONE) {
-    setting_none_time = 0;
-  }
-  
   now = millis();
   
-  switch(setting_state) {
-    case S_REDUCE_FAST:
-      if (now - 100 > setting_update_last) {
-        setting_update_last = now;
-        if (display_number > 0) {
-          --display_number; 
+  if (timer_state == T_SETTING) {
+    
+    if (setting_state != S_NONE) {
+      setting_none_time = 0;
+    }
+    
+    switch(setting_state) {
+      case S_REDUCE_FAST:
+        if (now - 100 > setting_update_last) {
+          setting_update_last = now;
+          if (display_number > 0) {
+            --display_number; 
+          }
         }
-      }
-      break;
-      
-    case S_REDUCE_MED:
-      if (now - 250 > setting_update_last) {
-        setting_update_last = now;
-        if (display_number > 0) {
-          --display_number; 
+        break;
+        
+      case S_REDUCE_MED:
+        if (now - 250 > setting_update_last) {
+          setting_update_last = now;
+          if (display_number > 0) {
+            --display_number; 
+          }
         }
-      }
-      break;
-      
-    case S_REDUCE_SLOW:
-      if (now - 500 > setting_update_last) {
-        setting_update_last = now;
-        if (display_number > 0) {
-          --display_number; 
+        break;
+        
+      case S_REDUCE_SLOW:
+        if (now - 500 > setting_update_last) {
+          setting_update_last = now;
+          if (display_number > 0) {
+            --display_number; 
+          }
         }
-      }
-      break;
-      
-    case S_NONE:
-      
-      if (timer_state == T_SETTING) {
-        if (setting_none_time == 0) {
-          setting_none_time = now;
-        } else if (now - setting_none_time > SETTING_WAIT) {
-          //setting_none_time = 0;
-          //setting_update_last = 0;
-          timer_state = T_OFF;
+        break;
+        
+      case S_NONE:
+        
+        //if (timer_state == T_SETTING) {
+          if (setting_none_time == 0) {
+            setting_none_time = now;
+          } else if (now - setting_none_time > SETTING_WAIT) {
+            //setting_none_time = 0;
+            //setting_update_last = 0;
+            timer_state = T_OFF;
+          }
+        //}
+        
+        
+        break;
+        
+      case S_INCREASE_SLOW:
+        if (now - 500 > setting_update_last) {
+          setting_update_last = now;
+          if (display_number < 9999) {
+            ++display_number; 
+          }
         }
-      }
-      
-      
-      break;
-      
-    case S_INCREASE_SLOW:
-      if (now - 500 > setting_update_last) {
-        setting_update_last = now;
-        if (display_number < 9999) {
-          ++display_number; 
+        break;
+        
+      case S_INCREASE_MED:
+        if (now - 250 > setting_update_last) {
+          setting_update_last = now;
+          if (display_number < 9999) {
+            ++display_number; 
+          }
         }
-      }
-      break;
-      
-    case S_INCREASE_MED:
-      if (now - 250 > setting_update_last) {
-        setting_update_last = now;
-        if (display_number < 9999) {
-          ++display_number; 
+        break;
+        
+      case S_INCREASE_FAST:
+        if (now - 100 > setting_update_last) {
+          setting_update_last = now;
+          if (display_number < 9999) {
+            ++display_number; 
+          }
         }
-      }
-      break;
-      
-    case S_INCREASE_FAST:
-      if (now - 100 > setting_update_last) {
-        setting_update_last = now;
-        if (display_number < 9999) {
-          ++display_number; 
-        }
-      }
-      break;
+        break;
+    }
   }
   
   switch(timer_state) {
@@ -132,7 +134,7 @@ void stateRun()
         // Handle the running alarm
         byte finished_sound = 0;
         byte finished_light = 0;
-        now = millis();
+        //now = millis();
         if (now - alarm_start > ALARM_SOUND_SECONDS) {
           // stop the sound
           finished_sound = 1;

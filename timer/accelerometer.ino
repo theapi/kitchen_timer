@@ -77,8 +77,9 @@ void accelerometerSetup(void)
     accel.writeRegister(ADXL345_REG_THRESH_FF, 0x05); // set free fall threshold
     
     // single tap configuration
-    accel.writeRegister(ADXL345_REG_DUR, 0x1F); // 625us/LSB
-    accel.writeRegister(ADXL345_REG_THRESH_TAP, 48); // 62.5mg/LSB  <==> 3000mg/62.5mg = 48 LSB as datasheet suggestion
+    //accel.writeRegister(ADXL345_REG_DUR, 0x1F); // 625us/LSB
+    accel.writeRegister(ADXL345_REG_DUR, 0x05);
+    accel.writeRegister(ADXL345_REG_THRESH_TAP, 0x05); // 62.5mg/LSB  <==> 3000mg/62.5mg = 48 LSB as datasheet suggestion
     accel.writeRegister(ADXL345_REG_TAP_AXES, B00000111); // enable tap detection on x,y,z axes
   
     // double tap configuration
