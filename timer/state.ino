@@ -8,36 +8,31 @@ void stateRun()
   
   if (interrupt_flag) {
 
-    int interruptSource = accel.readRegister(ADXL345_REG_INT_SOURCE);
+    interruptSource = accel.readRegister(ADXL345_REG_INT_SOURCE);
     Serial.print("### ");
     Serial.println(interruptSource, BIN);
     
     
-    if (interruptSource & B00000100) {
+    if (interruptSource & ACCEL_FREEFALL) {
       Serial.println("### FREE_FALL");
     }
     
     // Inactivity gets sent to the unused INT2 pin so we can ignore it.
     // It still needs to be fired by the ADXL345 so it can set itselt to low power mode
     /*
-    if (interruptSource & B00001000) {
+    if (interruptSource & ACCEL_INACTIVITY) {
       Serial.println("### Inactivity");
     }
     */
     
-    if (interruptSource & B00010000) {
+    if (interruptSource & ACCEL_ACTIVITY) {
       Serial.println("### Activity");
     }
     
-    if (interruptSource & B00100000) {
+    if (interruptSource & ACCEL_DOUBLE_TAP) {
       Serial.println("### DOUBLE_TAP");
-      
-      if (timer_state == T_SETTING) {
-        countdownStart();
-      }
-      
     }
-    else if (interruptSource & B01000000) { // when a double tap is detected also a signle tap is deteced. we use an else here so that we only print the double tap
+    else if (interruptSource & ACCEL_SINGLE_TAP) { // when a double tap is detected also a signle tap is deteced. we use an else here so that we only print the double tap
       Serial.println("### SINGLE_TAP");
     }
     
@@ -86,8 +81,8 @@ void stateRun()
         if (setting_none_time == 0) {
           setting_none_time = now;
         } else if (now - setting_none_time > SETTING_WAIT) {
-          setting_none_time = 0;
-          setting_update_last = 0;
+          //setting_none_time = 0;
+          //setting_update_last = 0;
           powerDown();
           /*
           // Turn off
@@ -183,7 +178,12 @@ void stateRun()
       break;
       
     case T_WOKE:
-      settingStart();
+      if ((interruptSource & ACCEL_DOUBLE_TAP) && (timer_state == T_SETTING)) {
+        // Double tap & setting mode
+        countdownStart();
+      } else {
+        settingStart();
+      }
       break;
       
     case T_ERROR:

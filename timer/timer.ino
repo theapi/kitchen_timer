@@ -133,6 +133,7 @@ unsigned long alarm_start; // When the alarm started
 unsigned long setting_update_last; // When the display number was last changed
 
 byte interrupt_flag;
+int interruptSource;
 
 // Assign a unique ID to this sensor at the same time
 Adafruit_ADXL345_Unified accel = Adafruit_ADXL345_Unified(12345);
@@ -211,6 +212,8 @@ void settingStart()
 {
   if (timer_state == T_ERROR) return;
   
+  setting_none_time = 0;
+  setting_update_last = 0;
   timer_state = T_SETTING;
 }
 

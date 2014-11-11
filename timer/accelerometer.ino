@@ -1,6 +1,11 @@
 #ifndef ACCELEROMETER_H
 #define ACCELEROMETER_H
 
+#define ACCEL_FREEFALL   B00000100
+#define ACCEL_INACTIVITY B00001000
+#define ACCEL_ACTIVITY   B00010000
+#define ACCEL_DOUBLE_TAP B00100000
+#define ACCEL_SINGLE_TAP B01000000
 
 void accelerometerDisplaySensorDetails(void)
 {
