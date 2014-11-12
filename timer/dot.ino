@@ -11,14 +11,13 @@ void dotBlink()
   if (timer_state == T_COUNTDOWN) {
     if (bitRead(dot_state, 4)) {
       // Currently on, so turn it off
-      bitWrite(dot_state, 4, 0);
+      dotOff();
     } else {
       // Currently off, so turn it on
-      bitWrite(dot_state, 4, 1);
+      dotOn();
     }
   } else {
-    // dot off
-    bitWrite(dot_state, 4, 0);
+    dotOff();
   }
 }
 
@@ -31,7 +30,8 @@ void dotMove()
     byte on = 0;
     if (bitRead(dot_state, 4)) {
       on = 1;
-      bitWrite(dot_state, 4, 0);
+      // Turn it off, so we can move it
+      dotOff();
     }
     
     // shift right
@@ -46,5 +46,15 @@ void dotMove()
       dot_state |= 0b0010000;
     }
   }
+}
+
+void dotOn()
+{
+  bitWrite(dot_state, 4, 1);
+}
+
+void dotOff()
+{
+  bitWrite(dot_state, 4, 0);
 }
 
