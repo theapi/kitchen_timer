@@ -22,7 +22,7 @@ void countdownUpdate()
     if (display_number == 0) {
       timer_state = T_ALARM; 
       // Countdown finished, no dot now.
-      bitWrite(dot_state, 4, 0);
+      dotOff();
     }
   }
 }

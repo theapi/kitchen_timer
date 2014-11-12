@@ -160,9 +160,7 @@ void accelerometerMonitor()
   sensors_event_t event = accelerometerRead(); 
   int val = event.acceleration.x; // chop to an int
   int val_y = event.acceleration.y; // chop to an int
-  
-  display_volts = 0;
-  
+
   if (val_y >= 10) {
     // Tilt 90 degrees forward, turn off.
     timer_state = T_OFF;
@@ -180,8 +178,11 @@ void accelerometerMonitor()
         batteryStartReading();
       }
     }
-    
+  
   } else {
+    
+    // Allow normal display to happen.
+    display_volts = 0;
 
     // Ensure the power hungry ADC is off.
     if (batteryAdcIsOn()) {
@@ -191,27 +192,20 @@ void accelerometerMonitor()
     if (timer_state == T_SETTING) {
     
       if (val >= INPUT_UP_FAST) {
-        //timer_state = T_SETTING;
         setting_state = S_INCREASE_FAST;
       } else if (val >= INPUT_UP_MED) {
-        //timer_state = T_SETTING;
         setting_state = S_INCREASE_MED;
       } else if (val >= INPUT_UP_SLOW) {
-        //timer_state = T_SETTING;
         setting_state = S_INCREASE_SLOW;
       } else if (val >= INPUT_DOWN_SLOW) {
         
         setting_state = S_NONE;
         
-        
       } else if (val >= INPUT_DOWN_MED) {
-        //timer_state = T_SETTING;
         setting_state = S_REDUCE_SLOW;
       } else if (val >= INPUT_DOWN_FAST) {
-        //timer_state = T_SETTING;
         setting_state = S_REDUCE_MED;
       } else {
-        //timer_state = T_SETTING;
         setting_state = S_REDUCE_FAST;
       }
     }
