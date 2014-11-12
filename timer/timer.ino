@@ -133,7 +133,7 @@ Adafruit_ADXL345_Unified accel = Adafruit_ADXL345_Unified(12345);
 //timer 2 compare ISR
 ISR (TIMER2_COMPA_vect)
 {
-  updateDisplay();
+  displayUpdate();
 }
 
 void ISR_activity() 
@@ -171,7 +171,7 @@ void setup()
     digitalWrite(digit_pins[i], HIGH);
   }
   
-  multiplexSetup();
+  displaySetup();
   accelerometerSetup();
   
   attachInterrupt(0, ISR_activity, HIGH);

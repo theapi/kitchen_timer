@@ -58,3 +58,34 @@ void dotOff()
   bitWrite(dot_state, 4, 0);
 }
 
+byte dotMergeWithShiftData(byte digit, byte data)
+{
+  switch (digit) {
+    case 0:
+      if (bitRead(dot_state, 4) && bitRead(dot_state, 3)) {
+        // Add the dot to the byte
+        data |= NUM_DOT;
+      }
+      break;
+    case 1:
+      if (bitRead(dot_state, 4) && bitRead(dot_state, 2)) {
+        // Add the dot to the byte
+        data |= NUM_DOT;
+      }
+      break;
+    case 2:
+      if (bitRead(dot_state, 4) && bitRead(dot_state, 1)) {
+        // Add the dot to the byte
+        data |= NUM_DOT;
+      }
+      break;
+    case 3:
+      if (bitRead(dot_state, 4) && bitRead(dot_state, 0)) {
+        // Add the dot to the byte
+        data |= NUM_DOT;
+      }
+      break;
+  } 
+  
+  return data;
+}

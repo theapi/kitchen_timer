@@ -2,7 +2,7 @@
  * Handles the led display
  */
  
-void multiplexSetup(void)
+void displaySetup(void)
 {
   cli();//stop interrupts
   
@@ -30,7 +30,42 @@ void multiplexSetup(void)
   
 }
 
-void updateDisplay()
+byte displayGetShiftData(byte digit, int number)
+{
+  int i = 10;
+  switch (digit) {
+    case 0:
+      if (number < 1000) {
+        // Show a blank rather than a leading zero.
+        i = 10;
+      } else {
+        i = number % 10000 / 1000;
+      }
+      break;
+    case 1:
+      if (number < 100) {
+        // Show a blank rather than a leading zero.
+        i = 10;
+      } else {
+        i = number % 1000 / 100;
+      }
+      break;
+    case 2:
+      if (number < 10) {
+        // Show a blank rather than a leading zero.
+        i = 10;
+      } else {
+        i = number % 100 / 10;
+      }
+      break;
+    case 3:
+      i = number % 10;
+      break;
+  }
+  return digit_map[i];
+}
+
+void displayUpdate()
 {
   byte previous_digit = current_digit;
   
@@ -49,101 +84,11 @@ void updateDisplay()
     // All digits as dashes
     data = NUM_DASH;
   } else if (display_volts > 0) {
-    
-    int i = 10;
-    switch (current_digit) {
-      case 0:
-        if (display_volts < 1000) {
-          // Show a blank rather than a leading zero.
-          i = 10;
-        } else {
-          i = display_volts % 10000 / 1000;
-        }
-        break;
-      case 1:
-        if (display_volts < 100) {
-          // Show a blank rather than a leading zero.
-          i = 10;
-        } else {
-          i = display_volts % 1000 / 100;
-        }
-        break;
-      case 2:
-        if (display_volts < 10) {
-          // Show a blank rather than a leading zero.
-          i = 10;
-        } else {
-          i = display_volts % 100 / 10;
-        }
-        break;
-      case 3:
-        i = display_volts % 10;
-        break;
-    }
-    data = digit_map[i];
-    
+    data = displayGetShiftData(current_digit, display_volts);
   } else {
- 
-    int i = 10;
-    switch (current_digit) {
-      case 0:
-        if (display_number < 1000) {
-          // Show a blank rather than a leading zero.
-          i = 10;
-        } else {
-          i = display_number % 10000 / 1000;
-        }
-        break;
-      case 1:
-        if (display_number < 100) {
-          // Show a blank rather than a leading zero.
-          i = 10;
-        } else {
-          i = display_number % 1000 / 100;
-        }
-        break;
-      case 2:
-        if (display_number < 10) {
-          // Show a blank rather than a leading zero.
-          i = 10;
-        } else {
-          i = display_number % 100 / 10;
-        }
-        break;
-      case 3:
-        i = display_number % 10;
-        break;
-    }
-    
-    data = digit_map[i];
-    
+    data = displayGetShiftData(current_digit, display_number);
     // Handle the dot
-    switch (current_digit) {
-      case 0:
-        if (bitRead(dot_state, 4) && bitRead(dot_state, 3)) {
-          // Add the dot to the byte
-          data |= NUM_DOT;
-        }
-        break;
-      case 1:
-        if (bitRead(dot_state, 4) && bitRead(dot_state, 2)) {
-          // Add the dot to the byte
-          data |= NUM_DOT;
-        }
-        break;
-      case 2:
-        if (bitRead(dot_state, 4) && bitRead(dot_state, 1)) {
-          // Add the dot to the byte
-          data |= NUM_DOT;
-        }
-        break;
-      case 3:
-        if (bitRead(dot_state, 4) && bitRead(dot_state, 0)) {
-          // Add the dot to the byte
-          data |= NUM_DOT;
-        }
-        break;
-    }
+    data = dotMergeWithShiftData(current_digit, data);
   }
   
   // Turn off the previous digit.
