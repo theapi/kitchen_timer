@@ -2,6 +2,7 @@
  * Handles the led display
  */
  
+
 void displaySetup(void)
 {
   cli();//stop interrupts

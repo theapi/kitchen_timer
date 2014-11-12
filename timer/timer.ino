@@ -36,7 +36,7 @@
 #define PIN_BLUE     9   // PWM blue led
 
 #define DIGIT_COUNT 4 // 4 digit display
- 
+
 #define NUM_0      B11110101 // 0
 #define NUM_1      B00000101 // 1
 #define NUM_2      B10110011 // 2
@@ -49,9 +49,9 @@
 #define NUM_9      B11000111 // 9
 #define NUM_BLANK  B00000000 // ' '
 #define NUM_DOT    B00001000 // .
-#define NUM_DASH   B00000001 // -
+#define NUM_DASH   B00000010 // -
 #define NUM_ERROR  B10010010
-
+ 
 #define COMPARE_REG 32 // OCR2A when to interupt (datasheet: 18.11.4)
  
 //Pin connected to ST_CP of 74HC595
@@ -62,18 +62,6 @@ int clockPin = PIN_CLOCK;
 int dataPin = PIN_DATA;
 
 const byte digit_pins[DIGIT_COUNT] = {PIN_DIGIT_3, PIN_DIGIT_2, PIN_DIGIT_1, PIN_DIGIT_0};
-
-byte breath_r = 0;
-byte breath_g = 0;
-byte breath_b = 200;
-float breath_speed = 6000.0;
-
-volatile int display_volts; // The volt reading to show when requested.
-volatile int display_number = START_TIME; // the number currently being displayed.
-volatile byte current_digit = DIGIT_COUNT - 1; // The digit currently being shown in the multiplexing.
-
-volatile byte dot_state = 0b00001000; // Position & visibiliy of dot (left most bit indicates visibility - 11000, 10100, 10010, 10001)
-
 const byte digit_map[12] =      //seven segment digits in bits
 {
   NUM_0,
@@ -89,6 +77,19 @@ const byte digit_map[12] =      //seven segment digits in bits
   NUM_BLANK,
   NUM_DOT
 };
+
+byte breath_r = 0;
+byte breath_g = 0;
+byte breath_b = 200;
+float breath_speed = 6000.0;
+
+volatile int display_volts; // The volt reading to show when requested.
+volatile int display_number = START_TIME; // the number currently being displayed.
+volatile byte current_digit = DIGIT_COUNT - 1; // The digit currently being shown in the multiplexing.
+
+volatile byte dot_state = 0b00001000; // Position & visibiliy of dot (left most bit indicates visibility - 11000, 10100, 10010, 10001)
+
+
 
 // The timer states.
 enum timer_states {
