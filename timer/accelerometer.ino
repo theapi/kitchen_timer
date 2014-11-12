@@ -7,6 +7,15 @@
 #define ACCEL_DOUBLE_TAP B00100000
 #define ACCEL_SINGLE_TAP B01000000
 
+// Inputs from the accelerometer for setting the time
+#define INPUT_UP_FAST     7
+#define INPUT_UP_MED      4
+#define INPUT_UP_SLOW     1
+#define INPUT_NONE        0
+#define INPUT_DOWN_SLOW  -1
+#define INPUT_DOWN_MED   -4
+#define INPUT_DOWN_FAST  -7
+
 void accelerometerDisplaySensorDetails(void)
 {
   sensor_t sensor;

@@ -24,15 +24,6 @@
 
 #define SETTING_WAIT       30 * 1000L // How long to wait for a setting confirmation
  
-// Inputs from the accelerometer for setting the time
-#define INPUT_UP_FAST     7
-#define INPUT_UP_MED      4
-#define INPUT_UP_SLOW     1
-#define INPUT_NONE        0
-#define INPUT_DOWN_SLOW  -1
-#define INPUT_DOWN_MED   -4
-#define INPUT_DOWN_FAST  -7
-
 #define PIN_LATCH    12  // ST_CP of 74HC595
 #define PIN_CLOCK    11 // SH_CP of 74HC595
 #define PIN_DATA     13 // DS of 74HC595
