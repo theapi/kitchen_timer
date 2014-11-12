@@ -203,8 +203,8 @@ void setup()
 void loop() 
 {
   if (timer_state != T_ERROR) {
-    timer.run();  
     stateRun();
+    timer.run();  
   }
 }
 
