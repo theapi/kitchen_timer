@@ -67,7 +67,7 @@ long batteryRead()
   
   // Clear the conversion complete flag.
   // "ADIF is cleared by writing a logical one to the flag" (datasheet: 23.9.2)
-  ADCSRA &= ~(1 << ADIF); // write 0 to flag to clear it
+  ADCSRA |= (1 << ADIF); // write 1 to flag to clear it
   
   return result; // Vcc in millivolts
 }
