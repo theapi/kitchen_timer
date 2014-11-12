@@ -1,24 +1,27 @@
 
-void colourSet()
+void breathColourSet()
 {
   if (timer_state == T_COUNTDOWN) {
-    if (display_number > 3) {
+    if (display_number > 30) {
+      // Greater than 30 minutes; blue, calm
       breath_speed = 6000.0;
       breath_r = 0;
       breath_g = 0;
       breath_b = 255;
-    } else if (display_number > 2) {
+    } else if (display_number > 5) {
+      // Greater than 5 minutes; green, slow
       breath_speed = 4000.0;
       breath_r = 0;
       breath_g = 255;
       breath_b = 30;
     } else if (display_number > 1) {
+      // Greater than 1 minute; orange, quickish
       breath_speed = 2000.0;
       breath_r = 255;
       breath_g = 128;
       breath_b = 0;
     } else {
-      // Alarm
+      // One minute left; red, fast
       breath_speed = 500.0;
       breath_r = 255;
       breath_g = 0;

@@ -118,7 +118,7 @@ SimpleTimer timer;
 int timer_dot_blink;
 int timer_dot_move;
 int timer_countdown;
-int timer_colour;
+int timer_breath;
 
 unsigned long setting_none_time = 0;
 unsigned long alarm_start; // When the alarm started
@@ -186,7 +186,7 @@ void setup()
   // Countdown with a minute resolution.
   timer_countdown = timer.setInterval(60000, countdownUpdate);
   
-  timer_colour = timer.setInterval(1000, colourSet);
+  timer_breath = timer.setInterval(1000, breathColourSet);
  
   settingStart();
   
