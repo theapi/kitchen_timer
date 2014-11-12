@@ -60,7 +60,7 @@ void stateRun()
         break;
         
       case S_REDUCE_MED:
-        if (now - 250 > setting_update_last) {
+        if (now - 200 > setting_update_last) {
           setting_update_last = now;
           if (display_number > 0) {
             --display_number; 
@@ -102,7 +102,7 @@ void stateRun()
         break;
         
       case S_INCREASE_MED:
-        if (now - 250 > setting_update_last) {
+        if (now - 200 > setting_update_last) {
           setting_update_last = now;
           if (display_number < 9999) {
             ++display_number; 
