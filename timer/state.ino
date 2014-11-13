@@ -11,8 +11,7 @@ void stateRun()
     interruptSource = accel.readRegister(ADXL345_REG_INT_SOURCE);
     Serial.print("### ");
     Serial.println(interruptSource, BIN);
-    
-    
+
     if (interruptSource & ACCEL_FREEFALL) {
       Serial.println("### FREE_FALL");
     }
@@ -32,8 +31,8 @@ void stateRun()
     
     if (interruptSource & ACCEL_DOUBLE_TAP) {
       Serial.println("### DOUBLE_TAP");
-    }
-    else if (interruptSource & ACCEL_SINGLE_TAP) { // when a double tap is detected also a signle tap is deteced. we use an else here so that we only print the double tap
+    } else if (interruptSource & ACCEL_SINGLE_TAP) { 
+      // when a double tap is detected also a single tap is deteced. we use an else here so that we only print the double tap
       Serial.println("### SINGLE_TAP");
     }
     
@@ -161,7 +160,13 @@ void stateRun()
       analogWrite(PIN_BLUE, 22);
       
       if (interruptSource & ACCEL_SINGLE_TAP) {
-        countdownStart();
+        if (interruptSource & ACCEL_DOUBLE_TAP) {
+          // Single tab will happen in a double tap too.
+          // But ignore it here.
+        } else {
+          // Just a single tap.
+          countdownStart();
+        }
       }
       break;
       
@@ -177,11 +182,7 @@ void stateRun()
       break;
       
     case T_WOKE:
-      if ((interruptSource & ACCEL_SINGLE_TAP) && (timer_state == T_SETTING)) {
-        countdownStart();
-      } else {
-        settingStart();
-      }
+      settingStart();
       break;
       
     case T_ERROR:
