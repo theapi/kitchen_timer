@@ -3,12 +3,13 @@ void countdownStart()
 {
   if (timer_state == T_ERROR) return;
 
+  // If no valid time has been set, then just turn off.
   if (display_number == 0) {
-    display_number = START_TIME;
+    timer_state = T_OFF;
+  } else {
+    timer_state = T_COUNTDOWN;
+    restartCountDownTimers();
   }
-  timer_state = T_COUNTDOWN;
-  restartCountDownTimers();
-  
 }
 
 void countdownUpdate()
