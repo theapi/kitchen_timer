@@ -207,6 +207,8 @@ void settingStart()
   setting_none_time = 0;
   setting_update_last = 0;
   timer_state = T_SETTING;
+  // Ensure the dot is off.
+  dotOff();
 
   // Set to the default start time if needed.
   if (display_number == 0) {
