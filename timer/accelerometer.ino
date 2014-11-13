@@ -87,12 +87,12 @@ void accelerometerSetup(void)
     
     // single tap configuration
     //accel.writeRegister(ADXL345_REG_DUR, 0x1F); // 625us/LSB
-    accel.writeRegister(ADXL345_REG_DUR, 0x05);
-    accel.writeRegister(ADXL345_REG_THRESH_TAP, 0x05); // 62.5mg/LSB  <==> 3000mg/62.5mg = 48 LSB as datasheet suggestion
+    accel.writeRegister(ADXL345_REG_DUR, 0x30);
+    accel.writeRegister(ADXL345_REG_THRESH_TAP, 0x40); // 62.5mg/LSB  <==> 3000mg/62.5mg = 48 LSB as datasheet suggestion
     accel.writeRegister(ADXL345_REG_TAP_AXES, B00000111); // enable tap detection on x,y,z axes
   
     // double tap configuration
-    accel.writeRegister(ADXL345_REG_LATENT, 0x10);
+    accel.writeRegister(ADXL345_REG_LATENT, 0x40);
     accel.writeRegister(ADXL345_REG_WINDOW, 0xFF);
     
     // inactivity configuration - 0 for inactive as soon as no movement
