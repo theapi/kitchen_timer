@@ -41,7 +41,7 @@ void accelerometerSetup(void)
     timer_state = T_ERROR;
   } else {
     
-    accel.setRange(ADXL345_RANGE_16_G); //  yep 16 - reduces sensitivity
+    accel.setRange(ADXL345_RANGE_2_G);
     // Display some basic information on this sensor
     accelerometerDisplaySensorDetails();
     
