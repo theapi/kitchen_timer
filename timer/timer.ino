@@ -207,6 +207,11 @@ void settingStart()
   setting_none_time = 0;
   setting_update_last = 0;
   timer_state = T_SETTING;
+
+  // Set to the default start time if needed.
+  if (display_number == 0) {
+    display_number = START_TIME;
+  }
 }
 
 void timersDisable()
