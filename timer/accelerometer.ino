@@ -18,17 +18,19 @@
 
 void accelerometerDisplaySensorDetails(void)
 {
-  sensor_t sensor;
-  accel.getSensor(&sensor);
-  Serial.println("------------------------------------");
-  Serial.print  ("Sensor:       "); Serial.println(sensor.name);
-  Serial.print  ("Driver Ver:   "); Serial.println(sensor.version);
-  Serial.print  ("Unique ID:    "); Serial.println(sensor.sensor_id);
-  Serial.print  ("Max Value:    "); Serial.print(sensor.max_value); Serial.println(" m/s^2");
-  Serial.print  ("Min Value:    "); Serial.print(sensor.min_value); Serial.println(" m/s^2");
-  Serial.print  ("Resolution:   "); Serial.print(sensor.resolution); Serial.println(" m/s^2");  
-  Serial.println("------------------------------------");
-  Serial.println("");
+  if (DEBUG) {
+    sensor_t sensor;
+    accel.getSensor(&sensor);
+    Serial.println("------------------------------------");
+    Serial.print  ("Sensor:       "); Serial.println(sensor.name);
+    Serial.print  ("Driver Ver:   "); Serial.println(sensor.version);
+    Serial.print  ("Unique ID:    "); Serial.println(sensor.sensor_id);
+    Serial.print  ("Max Value:    "); Serial.print(sensor.max_value); Serial.println(" m/s^2");
+    Serial.print  ("Min Value:    "); Serial.print(sensor.min_value); Serial.println(" m/s^2");
+    Serial.print  ("Resolution:   "); Serial.print(sensor.resolution); Serial.println(" m/s^2");  
+    Serial.println("------------------------------------");
+    Serial.println("");
+  }
 }
 
 
@@ -37,7 +39,7 @@ void accelerometerSetup(void)
   // Initialise the sensor
   if (!accel.begin()) {
     // There was a problem detecting the ADXL345
-    Serial.println("Damn, no ADXL345 detected");
+    if (DEBUG) Serial.println("Damn, no ADXL345 detected");
     timer_state = T_ERROR;
   } else {
     
@@ -45,14 +47,15 @@ void accelerometerSetup(void)
     // Display some basic information on this sensor
     accelerometerDisplaySensorDetails();
     
-    
-    Serial.print("ADXL345_REG_POWER_CTL = "); Serial.println(accel.readRegister(ADXL345_REG_POWER_CTL), BIN);
-    Serial.print("ADXL345_REG_BW_RATE = "); Serial.println(accel.readRegister(ADXL345_REG_BW_RATE), BIN);   
-    Serial.print("ADXL345_REG_ACT_TAP_STATUS = "); Serial.println(accel.readRegister(ADXL345_REG_ACT_TAP_STATUS), BIN);
-    Serial.print("ADXL345_REG_INT_ENABLE = "); Serial.println(accel.readRegister(ADXL345_REG_INT_ENABLE), BIN);
-    Serial.print("ADXL345_REG_INT_MAP = "); Serial.println(accel.readRegister(ADXL345_REG_INT_MAP), BIN);
-    Serial.print("ADXL345_REG_ACT_INACT_CTL = "); Serial.println(accel.readRegister(ADXL345_REG_ACT_INACT_CTL), BIN);
-    Serial.print("ADXL345_REG_THRESH_ACT = "); Serial.println(accel.readRegister(ADXL345_REG_THRESH_ACT), BIN);
+    if (DEBUG) {
+      Serial.print("ADXL345_REG_POWER_CTL = "); Serial.println(accel.readRegister(ADXL345_REG_POWER_CTL), BIN);
+      Serial.print("ADXL345_REG_BW_RATE = "); Serial.println(accel.readRegister(ADXL345_REG_BW_RATE), BIN);   
+      Serial.print("ADXL345_REG_ACT_TAP_STATUS = "); Serial.println(accel.readRegister(ADXL345_REG_ACT_TAP_STATUS), BIN);
+      Serial.print("ADXL345_REG_INT_ENABLE = "); Serial.println(accel.readRegister(ADXL345_REG_INT_ENABLE), BIN);
+      Serial.print("ADXL345_REG_INT_MAP = "); Serial.println(accel.readRegister(ADXL345_REG_INT_MAP), BIN);
+      Serial.print("ADXL345_REG_ACT_INACT_CTL = "); Serial.println(accel.readRegister(ADXL345_REG_ACT_INACT_CTL), BIN);
+      Serial.print("ADXL345_REG_THRESH_ACT = "); Serial.println(accel.readRegister(ADXL345_REG_THRESH_ACT), BIN);
+    }
     
     // Turn off interrupts
     accel.writeRegister(ADXL345_REG_INT_ENABLE, 0);
@@ -212,10 +215,12 @@ void accelerometerMonitor()
   }
   
 /*
-  Serial.print(val_y);
-  Serial.print(" ");
-  Serial.println(setting_state);
-  Serial.flush();
+  if (DEBUG) {
+    Serial.print(val_y);
+    Serial.print(" ");
+    Serial.println(setting_state);
+    Serial.flush();
+  }
 */
 }
 

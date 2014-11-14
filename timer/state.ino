@@ -9,33 +9,35 @@ void stateRun()
   if (interrupt_flag) {
 
     interruptSource = accel.readRegister(ADXL345_REG_INT_SOURCE);
-    Serial.print("### ");
-    Serial.println(interruptSource, BIN);
-
-    if (interruptSource & ACCEL_FREEFALL) {
-      Serial.println("### FREE_FALL");
-    }
     
-    // Inactivity gets sent to the unused INT2 pin so we can ignore it.
-    // It still needs to be fired by the ADXL345 so it can set itselt to low power mode
-    // It will alos be in the interruptSource even though it was not interrupted on this pin.
-    /*
-    if (interruptSource & ACCEL_INACTIVITY) {
-      Serial.println("### Inactivity");
+    if (DEBUG) {
+      Serial.print("### ");
+      Serial.println(interruptSource, BIN);
+  
+      if (interruptSource & ACCEL_FREEFALL) {
+        Serial.println("### FREE_FALL");
+      }
+      
+      // Inactivity gets sent to the unused INT2 pin so we can ignore it.
+      // It still needs to be fired by the ADXL345 so it can set itselt to low power mode
+      // It will alos be in the interruptSource even though it was not interrupted on this pin.
+      /*
+      if (interruptSource & ACCEL_INACTIVITY) {
+        Serial.println("### Inactivity");
+      }
+      */
+      
+      if (interruptSource & ACCEL_ACTIVITY) {
+        Serial.println("### Activity");
+      }
+      
+      if (interruptSource & ACCEL_DOUBLE_TAP) {
+        Serial.println("### DOUBLE_TAP");
+      } else if (interruptSource & ACCEL_SINGLE_TAP) { 
+        // when a double tap is detected also a single tap is deteced. we use an else here so that we only print the double tap
+        Serial.println("### SINGLE_TAP");
+      }
     }
-    */
-    
-    if (interruptSource & ACCEL_ACTIVITY) {
-      Serial.println("### Activity");
-    }
-    
-    if (interruptSource & ACCEL_DOUBLE_TAP) {
-      Serial.println("### DOUBLE_TAP");
-    } else if (interruptSource & ACCEL_SINGLE_TAP) { 
-      // when a double tap is detected also a single tap is deteced. we use an else here so that we only print the double tap
-      Serial.println("### SINGLE_TAP");
-    }
-    
     
     interrupt_flag = 0; 
   }
@@ -172,13 +174,17 @@ void stateRun()
       
     case T_OFF:
       // Turn off
-      Serial.println("Sleep now");
-      Serial.flush();
+      if (DEBUG) {
+        Serial.println("Sleep now");
+        Serial.flush();
+      }
       goToSleep();
       // Wake up
       timer_state = T_WOKE;
-      Serial.println("Wake now");
-      Serial.flush();
+      if (DEBUG) {
+        Serial.println("Wake now");
+        Serial.flush();
+      }
       break;
       
     case T_WOKE:

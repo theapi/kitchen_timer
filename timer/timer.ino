@@ -8,6 +8,8 @@
 
  */
  
+#define DEBUG false
+ 
 #include <Wire.h>
 #include <Adafruit_Sensor.h>
 #include <Adafruit_ADXL345_U.h>
@@ -147,7 +149,9 @@ void setup()
   // Turn ADC off
   batteryEnsureAdcOff(); 
   
-  Serial.begin(9600);
+  if (DEBUG) {
+    Serial.begin(9600);
+  }
   
   pinMode(PIN_RED, OUTPUT);
   pinMode(PIN_GREEN, OUTPUT);
