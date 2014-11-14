@@ -160,14 +160,19 @@ sensors_event_t accelerometerRead(void)
  */
 void accelerometerMonitor()
 {
-  sensors_event_t event = accelerometerRead(); 
-  int val = event.acceleration.x; // chop to an int
-  int val_y = event.acceleration.y; // chop to an int
+  accelerometer_event = accelerometerRead(); 
+  int val = accelerometer_event.acceleration.x; // chop to an int
+  int val_y = accelerometer_event.acceleration.y; // chop to an int
 
-  if (val_y >= 10) {
-    // Tilt 90 degrees forward, turn off.
-    timer_state = T_OFF;
-  
+  if (val_y >= 5) {
+    // Tilt forward
+    if (timer_state == T_SETTING) {
+      countdownStart();
+    } else {
+      // turn off.
+      timer_state = T_OFF; 
+    }
+
   } else if (val_y <= -10) {   
     // Tilt 90 degrees backward, show voltmeter.
     if (!batteryAdcIsOn()) {

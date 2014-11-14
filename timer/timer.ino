@@ -128,7 +128,7 @@ unsigned long setting_update_last; // When the display number was last changed
 
 byte interrupt_flag;
 int interruptSource;
-
+sensors_event_t accelerometer_event; // the last monitored event
 // Assign a unique ID to this sensor at the same time
 Adafruit_ADXL345_Unified accel = Adafruit_ADXL345_Unified(12345);
 
@@ -207,6 +207,11 @@ void loop()
 void settingStart()
 {
   if (timer_state == T_ERROR) return;
+  
+  // Purple
+  analogWrite(PIN_RED, 22);
+  analogWrite(PIN_GREEN, 255);
+  analogWrite(PIN_BLUE, 22);
   
   setting_none_time = 0;
   setting_update_last = 0;

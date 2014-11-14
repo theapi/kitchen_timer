@@ -157,10 +157,13 @@ void stateRun()
       
       
     case T_SETTING:
+    /*
       analogWrite(PIN_RED, 22);
       analogWrite(PIN_GREEN, 255);
       analogWrite(PIN_BLUE, 22);
+      */
       
+      /*
       if (interruptSource & ACCEL_SINGLE_TAP) {
         if (interruptSource & ACCEL_DOUBLE_TAP) {
           // Single tab will happen in a double tap too.
@@ -170,6 +173,7 @@ void stateRun()
           countdownStart();
         }
       }
+      */
       break;
       
     case T_OFF:
