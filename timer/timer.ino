@@ -24,7 +24,7 @@
 #define ALARM_SOUND_SECONDS 30 * 1000L // How long for the sound alarm
 #define ALARM_LIGHT_SECONDS 60 * 1000L // How long for the light alarm
 
-#define SETTING_WAIT       30 * 1000L // How long to wait for a setting confirmation
+#define SETTING_WAIT       10 * 1000L // How long to wait for a setting confirmation
  
 #define PIN_VOLT     4  // A pin on the connector to monitor volts externally
 #define PIN_LATCH    12  // ST_CP of 74HC595
