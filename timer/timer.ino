@@ -26,6 +26,7 @@
 
 #define SETTING_WAIT       30 * 1000L // How long to wait for a setting confirmation
  
+#define PIN_VOLT     4  // A pin on the connector to monitor volts externally
 #define PIN_LATCH    12  // ST_CP of 74HC595
 #define PIN_CLOCK    11 // SH_CP of 74HC595
 #define PIN_DATA     13 // DS of 74HC595
@@ -168,7 +169,8 @@ void setup()
   pinMode(clockPin, OUTPUT);
   pinMode(dataPin, OUTPUT);
   
-  pinMode(13, OUTPUT); // TMP
+  pinMode(PIN_VOLT, OUTPUT);
+  digitalWrite(PIN_VOLT, HIGH);
   
   for (int i = 0; i < DIGIT_COUNT; i++) {
     pinMode(digit_pins[i], OUTPUT);
@@ -250,8 +252,6 @@ void goToSleep()
   digitalWrite(PIN_GREEN, HIGH);
   digitalWrite(PIN_BLUE, HIGH);
   
-  digitalWrite(13, LOW);
-
   //cli();
 
   set_sleep_mode(SLEEP_MODE_PWR_DOWN);
@@ -275,18 +275,18 @@ void goToSleep()
   sleep_disable(); 
   //detachInterrupt(0); 
   //MCUSR = 0; // clear the reset register 
-
-  digitalWrite(13, HIGH);
  
- /*
-  power_adc_enable();
+ 
+  //power_adc_enable();
   power_timer0_enable();
   power_timer1_enable();
   power_timer2_enable();
-  power_usart0_enable();
+  if (DEBUG) {
+    power_usart0_enable();
+  }
   //power_twi_enable();
-  */
-  power_all_enable();
+  
+  //power_all_enable();
 }
 
 
