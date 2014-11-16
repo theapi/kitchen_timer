@@ -10,15 +10,6 @@
 #define ACCEL_DOUBLE_TAP B00100000
 #define ACCEL_SINGLE_TAP B01000000
 
-// Inputs from the accelerometer for setting the time
-#define INPUT_UP_FAST     5
-#define INPUT_UP_MED      4
-#define INPUT_UP_SLOW     3
-#define INPUT_NONE        0
-#define INPUT_DOWN_SLOW  -3
-#define INPUT_DOWN_MED   -4
-#define INPUT_DOWN_FAST  -5
-
 void accelerometerDisplaySensorDetails(void)
 {
   if (DEBUG) {
@@ -167,10 +158,8 @@ void accelerometerMonitor()
   sensors_event_t previous_event = accelerometer_event;
 
   accelerometer_event = accelerometerRead(); 
-  int val = accelerometer_event.acceleration.x; // chop to an int
+  int val_x = accelerometer_event.acceleration.x; // chop to an int
   int val_y = accelerometer_event.acceleration.y; // chop to an int
-  
-  
   
   if (val_y <= -10) {   
     // Tilt 90 degrees backward, show voltmeter.
@@ -211,24 +200,44 @@ void accelerometerMonitor()
     }
     
     if (timer_state == T_SETTING) {
-    
-      if (val >= INPUT_UP_FAST) {
-        setting_state = S_INCREASE_FAST;
-      } else if (val >= INPUT_UP_MED) {
-        setting_state = S_INCREASE_MED;
-      } else if (val >= INPUT_UP_SLOW) {
-        setting_state = S_INCREASE_SLOW;
-      } else if (val >= INPUT_DOWN_SLOW) {
-        
-        setting_state = S_NONE;
-        
-      } else if (val >= INPUT_DOWN_MED) {
-        setting_state = S_REDUCE_SLOW;
-      } else if (val >= INPUT_DOWN_FAST) {
-        setting_state = S_REDUCE_MED;
-      } else {
-        setting_state = S_REDUCE_FAST;
+      switch (val_x) {
+        case 10:
+        case 9:
+        case 8:
+        case 7:
+        case 6:
+          setting_state = S_REDUCE_FAST; 
+          break;
+          
+        case 5:
+          setting_state = S_REDUCE_MED; 
+          break;
+          
+        case 4:
+        case 3:
+          setting_state = S_REDUCE_SLOW; 
+          break;
+          
+        case -10:
+        case -9:
+        case -8:
+        case -7:
+        case -6:
+          setting_state = S_INCREASE_FAST; 
+          break;
+          
+        case -5:
+          setting_state = S_INCREASE_MED; 
+          break;
+          
+        case -4:
+        case -3:
+          setting_state = S_INCREASE_SLOW; 
+          break;
+          
+        default: setting_state = S_NONE;  
       }
+
     }
   }
   
