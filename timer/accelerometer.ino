@@ -11,13 +11,13 @@
 #define ACCEL_SINGLE_TAP B01000000
 
 // Inputs from the accelerometer for setting the time
-#define INPUT_UP_FAST     7
+#define INPUT_UP_FAST     5
 #define INPUT_UP_MED      4
-#define INPUT_UP_SLOW     2
+#define INPUT_UP_SLOW     3
 #define INPUT_NONE        0
-#define INPUT_DOWN_SLOW  -2
+#define INPUT_DOWN_SLOW  -3
 #define INPUT_DOWN_MED   -4
-#define INPUT_DOWN_FAST  -7
+#define INPUT_DOWN_FAST  -5
 
 void accelerometerDisplaySensorDetails(void)
 {
