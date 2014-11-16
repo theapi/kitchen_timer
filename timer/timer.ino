@@ -207,7 +207,7 @@ void loop()
 }
 
 void settingStart()
-{
+{  
   if (timer_state == T_ERROR) return;
   
   // Purple
@@ -236,6 +236,7 @@ void timersDisable()
 
 void goToSleep()
 {
+  noInterrupts();
   timer_state = T_OFF;
   
   batteryEnsureAdcOff();
@@ -269,7 +270,9 @@ void goToSleep()
   // turn off brown-out enable in software
   //MCUCR = bit (BODS) | bit (BODSE);  // turn on brown-out enable select
   //MCUCR = bit (BODS);        // this must be done within 4 clock cycles of above
-  //interrupts();
+  
+  // Turn interrupt back on so the wake up signal can happen
+  interrupts();
   sleep_cpu();              // sleep within 3 clock cycles of brown out
   
   sleep_disable(); 
@@ -277,6 +280,7 @@ void goToSleep()
   //MCUSR = 0; // clear the reset register 
  
  
+ /*
   //power_adc_enable();
   power_timer0_enable();
   power_timer1_enable();
@@ -285,8 +289,8 @@ void goToSleep()
     power_usart0_enable();
   }
   //power_twi_enable();
-  
-  //power_all_enable();
+  */
+  power_all_enable();
 }
 
 

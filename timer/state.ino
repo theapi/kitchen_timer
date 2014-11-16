@@ -121,7 +121,7 @@ void stateRun()
         break;
     }
   }
-  
+    
   switch(timer_state) {
     case T_COUNTDOWN:
       breath(breath_speed, breath_r, breath_g, breath_b);
@@ -187,8 +187,8 @@ void stateRun()
       timer_state = T_WOKE;
       if (DEBUG) {
         Serial.println("Wake now");
-        Serial.flush();
       }
+      
       break;
       
     case T_WOKE:

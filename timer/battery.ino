@@ -21,7 +21,7 @@ void batteryAdcOn()
   // set the reference to Vcc and the measurement to the internal 1.1V reference
   ADMUX = (1 << REFS0) | (1 << MUX3) | (1 << MUX2) | (1 << MUX1);
   
-  // Power up the ADC, default values: no interrupts.
+  // Power up the ADC, default values: no interrupts
   ADCSRA = (1 << ADEN);
 }
 

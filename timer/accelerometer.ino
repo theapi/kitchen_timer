@@ -1,6 +1,9 @@
 #ifndef ACCELEROMETER_H
 #define ACCELEROMETER_H
 
+#define ACCEL_TILT_OFF      -5 // tilt backward passed this value to turn off
+#define ACCEL_TILT_COUNTDOWN 8 // tilt forward passed this value to start the countdown
+
 #define ACCEL_FREEFALL   B00000100
 #define ACCEL_INACTIVITY B00001000
 #define ACCEL_ACTIVITY   B00010000
@@ -43,7 +46,7 @@ void accelerometerSetup(void)
     timer_state = T_ERROR;
   } else {
     
-    accel.setRange(ADXL345_RANGE_2_G);
+    accel.setRange(ADXL345_RANGE_4_G);
     // Display some basic information on this sensor
     accelerometerDisplaySensorDetails();
     
@@ -160,31 +163,40 @@ sensors_event_t accelerometerRead(void)
  */
 void accelerometerMonitor()
 {
+  // Store the exiasting event so it can be compared with the reading about to be taken
+  sensors_event_t previous_event = accelerometer_event;
+
   accelerometer_event = accelerometerRead(); 
   int val = accelerometer_event.acceleration.x; // chop to an int
   int val_y = accelerometer_event.acceleration.y; // chop to an int
-
-  if (val_y >= 5) {
-    // Tilt forward
-    if (timer_state == T_SETTING) {
-      countdownStart();
-    } else {
-      // turn off.
-      timer_state = T_OFF; 
-    }
-
-  } else if (val_y <= -10) {   
+  
+  
+  
+  if (val_y <= -10) {   
     // Tilt 90 degrees backward, show voltmeter.
     if (!batteryAdcIsOn()) {
       // Turn the ADC on so its ready for next time round to make a reading.
       batteryAdcOn();
+      //if (DEBUG) Serial.println("ADC: batteryAdcOn");
     } else {
       if (batteryReadComplete()) {
         long vcc = batteryRead();
+        //if (DEBUG) Serial.println("ADC: batteryRead");
         display_volts = vcc;
       } else {
         batteryStartReading();
+        //if (DEBUG) Serial.println("ADC: batteryStartReading");
       }
+    }
+    //if (DEBUG) Serial.println(display_volts);
+    
+  } else if (val_y <= ACCEL_TILT_OFF) {
+    // turn off.
+    timer_state = T_OFF; 
+    
+  } else if (val_y >= ACCEL_TILT_COUNTDOWN) {
+    if (timer_state == T_SETTING) {
+      countdownStart();
     }
   
   } else {
@@ -195,6 +207,7 @@ void accelerometerMonitor()
     // Ensure the power hungry ADC is off.
     if (batteryAdcIsOn()) {
       batteryEnsureAdcOff(); 
+      //if (DEBUG) Serial.println("ADC: batteryEnsureAdcOff");
     }
     
     if (timer_state == T_SETTING) {
@@ -218,6 +231,8 @@ void accelerometerMonitor()
       }
     }
   }
+  
+  //if (DEBUG) Serial.println(val_y);
   
 /*
   if (DEBUG) {
