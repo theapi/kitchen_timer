@@ -128,18 +128,20 @@ void stateRun()
       break;
     
     case T_ALARM:
+      breath(breath_speed, breath_r, breath_g, breath_b);
       if (alarm_start == 0) {
         // Start the alarm
         alarm_start = millis();
+        digitalWrite(PIN_SOUND, LOW); // ON
       } else {
         // Handle the running alarm
         byte finished_sound = 0;
         byte finished_light = 0;
-        //now = millis();
+ 
         if (now - alarm_start > ALARM_SOUND_SECONDS) {
           // stop the sound
           finished_sound = 1;
-          
+          digitalWrite(PIN_SOUND, HIGH); // OFF
         }
         if (now - alarm_start > ALARM_LIGHT_SECONDS) {
           // stop the light

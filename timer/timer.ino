@@ -21,10 +21,10 @@
  
 #define START_TIME 30 // Default start at 30 minutes
 
-#define ALARM_SOUND_SECONDS 30 * 1000L // How long for the sound alarm
+#define ALARM_SOUND_SECONDS 14 * 1000L // How long for the sound alarm
 #define ALARM_LIGHT_SECONDS 60 * 1000L // How long for the light alarm
 
-#define SETTING_WAIT       10 * 1000L // How long to wait for a setting confirmation
+#define SETTING_WAIT       7 * 1000L // How long to wait for a setting confirmation
  
 #define PIN_VOLT     4  // A pin on the connector to monitor volts externally
 #define PIN_LATCH    12  // ST_CP of 74HC595
@@ -37,6 +37,7 @@
 #define PIN_RED      5   // PWM red led
 #define PIN_GREEN    6   // PWM green led
 #define PIN_BLUE     9   // PWM blue led
+#define PIN_SOUND    10  // The sound chip, LOW to play - UM66T-05L: Home Sweet Home :)
 
 #define DIGIT_COUNT 4 // 4 digit display
 
@@ -178,6 +179,10 @@ void setup()
     digitalWrite(digit_pins[i], HIGH);
   }
   
+  // Sound
+  pinMode(PIN_SOUND, OUTPUT);
+  digitalWrite(PIN_SOUND, HIGH); // OFF
+  
   displaySetup();
   accelerometerSetup();
   
@@ -238,6 +243,9 @@ void goToSleep()
 {
   noInterrupts();
   timer_state = T_OFF;
+  
+  // Ensure sound is off
+  digitalWrite(PIN_SOUND, HIGH);
   
   batteryEnsureAdcOff();
   timersDisable();
