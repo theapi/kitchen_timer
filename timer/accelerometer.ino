@@ -37,7 +37,7 @@ void accelerometerSetup(void)
     timer_state = T_ERROR;
   } else {
     
-    accel.setRange(ADXL345_RANGE_4_G);
+    accel.setRange(ADXL345_RANGE_2_G);
     // Display some basic information on this sensor
     accelerometerDisplaySensorDetails();
     

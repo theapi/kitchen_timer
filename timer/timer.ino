@@ -247,6 +247,9 @@ void goToSleep()
   // Ensure sound is off
   digitalWrite(PIN_SOUND, HIGH);
   
+  // Reset the alarm
+  alarm_start = 0;
+  
   batteryEnsureAdcOff();
   timersDisable();
 

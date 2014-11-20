@@ -128,7 +128,7 @@ void stateRun()
       break;
     
     case T_ALARM:
-      breath(breath_speed, breath_r, breath_g, breath_b);
+      breath(250.0, breath_r, breath_g, breath_b); // Faster red
       if (alarm_start == 0) {
         // Start the alarm
         alarm_start = millis();
