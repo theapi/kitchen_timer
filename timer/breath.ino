@@ -8,12 +8,18 @@ void breathColourSet()
       breath_r = 0;
       breath_g = 0;
       breath_b = 255;
-    } else if (display_number > 5) {
-      // Greater than 5 minutes; green, slow
-      breath_speed = 4000.0;
+    } else if (display_number > 15) {
+      // Greater than 15 minutes; green, slow
+      breath_speed = 5000.0;
       breath_r = 0;
       breath_g = 255;
       breath_b = 30;
+    } else if (display_number > 5) {
+      // Greater than 5 minutes; yellow, slow
+      breath_speed = 4000.0;
+      breath_r = 255;
+      breath_g = 255;
+      breath_b = 0;
     } else if (display_number > 1) {
       // Greater than 1 minute; orange, quickish
       breath_speed = 2000.0;
