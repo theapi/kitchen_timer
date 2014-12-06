@@ -93,7 +93,7 @@ void accelerometerSetup(void)
     accel.writeRegister(ADXL345_REG_WINDOW, 0xFF);
     
     // inactivity configuration - 0 for inactive as soon as no movement
-    accel.writeRegister(ADXL345_REG_TIME_INACT, 1); // 1s / LSB
+    accel.writeRegister(ADXL345_REG_TIME_INACT, 0); // 1s / LSB
     accel.writeRegister(ADXL345_REG_THRESH_INACT, 1); // 62.5mg / LSB
     // also working good with high movements: R_TIME_INACT=5, R_THRESH_INACT=16, R_ACT_INACT_CTL=B8(00000111)
     // but unusable for a quite slow movements
