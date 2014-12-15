@@ -161,13 +161,10 @@ void accelerometerMonitor()
   int val_x = accelerometer_event.acceleration.x; // chop to an int
   int val_y = accelerometer_event.acceleration.y; // chop to an int
   
-  if (val_y <= ACCEL_TILT_OFF) {
-    // turn off.
-    timer_state = T_OFF; 
+  
+  if (val_y <= -9) { 
     
-  } else if (val_y >= 10) { 
-    
-    // Tilt 90 degrees forward, show voltmeter.
+    // Tilt 90 degrees backward, show voltmeter.
     if (!batteryAdcIsOn()) {
       // Turn the ADC on so its ready for next time round to make a reading.
       batteryAdcOn();
@@ -183,7 +180,11 @@ void accelerometerMonitor()
       }
     }
     //if (DEBUG) Serial.println(display_volts);
-    
+   
+  } else if (val_y <= ACCEL_TILT_OFF) {
+    // turn off.
+    timer_state = T_OFF; 
+
   } else if (val_y >= ACCEL_TILT_COUNTDOWN) {
     if (timer_state == T_SETTING) {
       countdownStart();
