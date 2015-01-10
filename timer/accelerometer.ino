@@ -105,20 +105,21 @@ void accelerometerSetup(void)
     //accel.writeRegister(ADXL345_REG_ACT_INACT_CTL, B01110111); // enable activity and inactivity detection on x,y,z using dc
     accel.writeRegister(ADXL345_REG_ACT_INACT_CTL, B11111111); // ac
    
+    // set the LOW_POWER bit in R_BW_RATE
+    //int bwRate = accel.readRegister(ADXL345_REG_BW_RATE);
+    accel.writeRegister(ADXL345_REG_BW_RATE, B00010111); // low power 125 Hz 34uA
+   
     // set the ADXL345 in measurement and sleep Mode: this will save power while while we will still be able to detect activity
     // set the Link bit to 1 so that the activity and inactivity functions aren't concurrent but alternatively activated
     // set the AUTO_SLEEP bit to 1 so that the device automatically goes to sleep when it detects inactivity
-    //accel.writeRegister(ADXL345_REG_POWER_CTL, B00111100);
+    // sleep sampling at 2 hz
+    accel.writeRegister(ADXL345_REG_POWER_CTL, B00111110);
     
-    accel.writeRegister(ADXL345_REG_POWER_CTL, B00111000);
-    
-    // set the LOW_POWER bit to 0 in R_BW_RATE: get back to full accuracy measurement (we will consume more power)
-    int bwRate = accel.readRegister(ADXL345_REG_BW_RATE);
-    accel.writeRegister(ADXL345_REG_BW_RATE, bwRate & B00001010); // 100 Hz 50uA
-    
-    
-    accel.writeRegister(ADXL345_REG_INT_ENABLE, B1111100); // enable single and double tap, activity, inactivity and free fall detection
+    //accel.writeRegister(ADXL345_REG_POWER_CTL, B00111000);
 
+    
+    //accel.writeRegister(ADXL345_REG_INT_ENABLE, B1111100); // enable single and double tap, activity, inactivity and free fall detection
+    accel.writeRegister(ADXL345_REG_INT_ENABLE, B00011000); // enable activity and inactivity interrupt
     
     //accelerometerStartMeasuring();
 
