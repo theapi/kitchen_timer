@@ -24,7 +24,7 @@ void breathColourSet()
       // Greater than 1 minute; orange, quickish
       breath_speed = 2000.0;
       breath_r = 255;
-      breath_g = 128;
+      breath_g = 80;
       breath_b = 0;
     } else {
       // One minute left; red, fast
