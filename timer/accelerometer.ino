@@ -2,7 +2,7 @@
 #define ACCELEROMETER_H
 
 #define ACCEL_TILT_OFF      -5 // tilt backward passed this value to turn off
-#define ACCEL_TILT_COUNTDOWN 8 // tilt forward passed this value to start the countdown
+#define ACCEL_TILT_COUNTDOWN 7 // tilt forward passed this value to start the countdown
 
 #define ACCEL_FREEFALL   B00000100
 #define ACCEL_INACTIVITY B00001000
@@ -163,9 +163,13 @@ void accelerometerMonitor()
   int val_y = accelerometer_event.acceleration.y; // chop to an int
   
   
-  if (val_y <= -9) { 
+ if (val_y <= ACCEL_TILT_OFF) {
+    // turn off.
+    timer_state = T_OFF; 
+
+  } else if (val_y >= 9) { 
     
-    // Tilt 90 degrees backward, show voltmeter.
+    // Tilt 90 degrees forward, show voltmeter.
     if (!batteryAdcIsOn()) {
       // Turn the ADC on so its ready for next time round to make a reading.
       batteryAdcOn();
@@ -182,10 +186,6 @@ void accelerometerMonitor()
     }
     //if (DEBUG) Serial.println(display_volts);
    
-  } else if (val_y <= ACCEL_TILT_OFF) {
-    // turn off.
-    timer_state = T_OFF; 
-
   } else if (val_y >= ACCEL_TILT_COUNTDOWN) {
     if (timer_state == T_SETTING) {
       countdownStart();
@@ -243,7 +243,7 @@ void accelerometerMonitor()
     }
   }
   
-  //if (DEBUG) Serial.println(val_y);
+  if (DEBUG) Serial.println(val_y);
   
 /*
   if (DEBUG) {
