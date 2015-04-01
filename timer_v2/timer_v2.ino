@@ -8,7 +8,7 @@
  * UM66T-05L: Home Sweet Home
  */
 
-#define DEBUG true
+#define DEBUG false
 
 #include <Wire.h>
 #include <SPI.h>
@@ -172,11 +172,7 @@ void timersDisable()
 
 void goToSleep()
 {
-  noInterrupts();
   timer_state = T_OFF;
-
-  // Ensure sound is off
-  digitalWrite(PIN_SOUND, HIGH);
 
   // Reset the alarm
   alarm_start = 0;
@@ -184,27 +180,23 @@ void goToSleep()
   batteryEnsureAdcOff();
   timersDisable();
 
-  // @todo:Turn off the display
-  // ...
+  // Turn off the display
+  oled.ssd1306_command(SSD1306_DISPLAYOFF);
+
+  // Ensure sound is off
+  digitalWrite(PIN_SOUND, HIGH);
 
   // Ensure the led is OFF (common anode)
   digitalWrite(PIN_RED, HIGH);
   digitalWrite(PIN_GREEN, HIGH);
   digitalWrite(PIN_BLUE, HIGH);
 
-  //cli();
 
+  noInterrupts();
   set_sleep_mode(SLEEP_MODE_PWR_DOWN);
   power_all_disable();
 
   sleep_enable();
-  //sei();
-
-  // Do not interrupt before we go to sleep, or the
-  // ISR will detach interrupts and we won't wake.
-  //noInterrupts();
-
-
 
   // turn off brown-out enable in software
   //MCUCR = bit (BODS) | bit (BODSE);  // turn on brown-out enable select
@@ -215,7 +207,6 @@ void goToSleep()
   sleep_cpu();              // sleep within 3 clock cycles of brown out
 
   sleep_disable();
-  //detachInterrupt(0);
   //MCUSR = 0; // clear the reset register
 
 
@@ -230,21 +221,18 @@ void goToSleep()
   //power_twi_enable();
   */
   power_all_enable();
+
+  // Turn the display back on
+  displaySetup();
 }
 
 /**
  * @todo: figure out how to get this into the library
  */
-void displaySetup(void)
+void displaySetup()
 {
   oled.begin(SSD1306_SWITCHCAPVCC, 0x3C);
   oled.setTextColor(WHITE);
-
-  // Show image buffer on the display hardware.
-  // Since the buffer is intialized with an Adafruit splashscreen
-  // internally, this will display the splashscreen.
-  oled.display();
-  delay(1000);
 }
 
 /**
