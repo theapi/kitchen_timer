@@ -1,6 +1,5 @@
 /*
   Kitchen timer
-  Turning on the outputs of a 74HC595 using an array
 
  Hardware:
  * Monochrome 0.96" 128x64 OLED graphic display https://www.adafruit.com/products/326
@@ -31,6 +30,7 @@
 
 #define SETTING_WAIT       7 * 1000L // How long to wait for a setting confirmation
 
+#define PIN_PNP      2  // Keep low to stay on
 #define PIN_VOLT     4  // A pin on the connector to monitor volts externally
 #define PIN_RED      5   // PWM red led
 #define PIN_GREEN    6   // PWM green led
@@ -88,6 +88,7 @@ TimerDisplay display = TimerDisplay();
 
 int display_volts = 0;
 int display_number = START_TIME;
+byte running_flag = 0; // Whether running ok (for watchdog reset power off)
 
 void ISR_activity()
 {
@@ -96,6 +97,14 @@ void ISR_activity()
 
 void setup()
 {
+  wdt_reset(); // Ensure watchdog is reset
+
+  pinMode(PIN_PNP, OUTPUT);
+  // Set to high so a watchdog reset will power off the device.
+  digitalWrite(PIN_PNP, HIGH);
+  running_flag = 0;
+  // Let the watchdog monitor for hangups
+  wdt_enable(WDTO_8S);
 
   if (DEBUG) {
     Serial.begin(9600);
@@ -140,6 +149,15 @@ void setup()
 
 void loop()
 {
+  // Tell watchdog all is ok.
+  wdt_reset();
+  if (!running_flag) {
+    // Take control of the pnp here
+    // so the watchdog can remove power.
+    digitalWrite(PIN_PNP, LOW);
+    running_flag = 1;
+  }
+
   if (timer_state != T_ERROR) {
     stateRun();
     timer.run();
@@ -207,7 +225,7 @@ void goToSleep()
   sleep_cpu();              // sleep within 3 clock cycles of brown out
 
   sleep_disable();
-  //MCUSR = 0; // clear the reset register
+  MCUSR = 0; // clear the reset register
 
 
  /*
