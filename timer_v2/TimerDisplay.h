@@ -21,9 +21,15 @@ class TimerDisplay{
     // Constructor
     TimerDisplay();
 
+    // Count down 1 second
+    void decrementTime();
+    uint8_t finished();
+
     // How many minutes to display
     uint16_t getMinutes();
     void setMinutes(uint16_t val);
+    void decrementMinutes();
+    void incrementMinutes();
 
     // How many seconds to display
     uint8_t getSeconds();

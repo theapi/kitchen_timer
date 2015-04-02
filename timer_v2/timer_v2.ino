@@ -87,7 +87,6 @@ Adafruit_SSD1306 oled(OLED_RESET);
 TimerDisplay display = TimerDisplay();
 
 int display_volts = 0;
-int display_number = START_TIME;
 byte running_flag = 0; // Whether running ok (for watchdog reset power off)
 
 void ISR_activity()
@@ -178,8 +177,9 @@ void settingStart()
   timer_state = T_SETTING;
 
   // Set to the default start time if needed.
-  if (display_number == 0) {
-    display_number = START_TIME;
+  if (display.finished()) {
+    timer_state = T_OFF;
+    display.setMinutes(START_TIME);
   }
 }
 
