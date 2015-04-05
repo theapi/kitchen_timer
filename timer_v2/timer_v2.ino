@@ -7,12 +7,10 @@
  * UM66T-05L: Home Sweet Home
  */
 
-#define DEBUG false
+#define DEBUG true
 
 #include <Wire.h>
-#include <SPI.h>
-#include <Adafruit_GFX.h>
-#include <Adafruit_SSD1306.h>
+#include "U8glib.h"
 #include <Adafruit_Sensor.h>
 #include <Adafruit_ADXL345_U.h>
 #include <avr/wdt.h>
@@ -30,12 +28,11 @@
 
 #define SETTING_WAIT       7 * 1000L // How long to wait for a setting confirmation
 
-#define PIN_PNP      2  // Keep low to stay on
-#define PIN_VOLT     4  // A pin on the connector to monitor volts externally
-#define PIN_RED      5   // PWM red led
-#define PIN_GREEN    6   // PWM green led
-#define PIN_BLUE     9   // PWM blue led
-#define PIN_SOUND    10  // The sound chip, LOW to play - UM66T-05L: Home Sweet Home :)
+#define PIN_PNP      13  // Keep low to stay on
+#define PIN_RED      9   // PWM red led
+#define PIN_GREEN    10   // PWM green led
+#define PIN_BLUE     11   // PWM blue led
+#define PIN_SOUND    12  // The sound chip, LOW to play - UM66T-05L: Home Sweet Home :)
 
 
 
@@ -53,7 +50,7 @@ enum timer_states {
   T_WOKE,
   T_ERROR
 };
-timer_states timer_state = T_SETTING;
+timer_states timer_state = T_COUNTDOWN;
 
 // Time setting states
 enum setting_states {
@@ -82,8 +79,8 @@ sensors_event_t accelerometer_event; // the last monitored event
 // Assign a unique ID to this sensor at the same time
 Adafruit_ADXL345_Unified accel = Adafruit_ADXL345_Unified(12345);
 
-#define OLED_RESET 4
-Adafruit_SSD1306 oled(OLED_RESET);
+U8GLIB_SSD1306_128X64 u8g(U8G_I2C_OPT_NONE|U8G_I2C_OPT_DEV_0);
+
 TimerDisplay display = TimerDisplay();
 
 int display_volts = 0;
@@ -94,6 +91,7 @@ void ISR_activity()
   interrupt_flag = 1;
 }
 
+
 void setup()
 {
   wdt_reset(); // Ensure watchdog is reset
@@ -103,7 +101,7 @@ void setup()
   digitalWrite(PIN_PNP, HIGH);
   running_flag = 0;
   // Let the watchdog monitor for hangups
-  wdt_enable(WDTO_8S);
+  //wdt_enable(WDTO_8S);
 
   if (DEBUG) {
     Serial.begin(9600);
@@ -118,31 +116,31 @@ void setup()
   digitalWrite(PIN_GREEN, HIGH);
   digitalWrite(PIN_BLUE, HIGH);
 
-  pinMode(PIN_VOLT, OUTPUT);
-  digitalWrite(PIN_VOLT, HIGH);
 
   // Sound
   pinMode(PIN_SOUND, OUTPUT);
   digitalWrite(PIN_SOUND, HIGH); // OFF
 
-  displaySetup();
+  //displaySetup();
   accelerometerSetup();
 
   // React to the accelerometer
   attachInterrupt(0, ISR_activity, HIGH);
 
   // Check the accelerometer.
-  timer.setInterval(100, accelerometerMonitor);
+  timer.setInterval(250, accelerometerMonitor);
 
   // Countdown with a minute resolution.
-  timer_countdown = timer.setInterval(60000, countdownUpdate);
+  timer_countdown = timer.setInterval(1000, countdownUpdate);
 
-  timer_breath = timer.setInterval(1011, breathColourSet);
+  //timer_breath = timer.setInterval(1011, breathColourSet);
 
   // Keep an eye on the battery
-  timer_battery = timer.setInterval(10333, batteryMonitor);
+  //timer_battery = timer.setInterval(10333, batteryMonitor);
 
-  settingStart();
+  displayUpdate();
+
+  //settingStart();
 
 }
 
@@ -158,7 +156,7 @@ void loop()
   }
 
   if (timer_state != T_ERROR) {
-    stateRun();
+    //stateRun();
     timer.run();
   }
 }
@@ -189,7 +187,7 @@ void timersDisable()
 }
 
 void goToSleep()
-{
+{return;
   timer_state = T_OFF;
 
   // Reset the alarm
@@ -199,7 +197,7 @@ void goToSleep()
   timersDisable();
 
   // Turn off the display
-  oled.ssd1306_command(SSD1306_DISPLAYOFF);
+  //oled.ssd1306_command(SSD1306_DISPLAYOFF);
 
   // Ensure sound is off
   digitalWrite(PIN_SOUND, HIGH);
@@ -249,8 +247,7 @@ void goToSleep()
  */
 void displaySetup()
 {
-  oled.begin(SSD1306_SWITCHCAPVCC, 0x3C);
-  oled.setTextColor(WHITE);
+  
 }
 
 /**
@@ -258,6 +255,14 @@ void displaySetup()
  */
 void displayUpdate()
 {
+  
+  // picture loop
+  u8g.firstPage();  
+  do {
+    draw();
+  } while( u8g.nextPage() );
+  
+  /*
   // Clear the buffer
   oled.clearDisplay();
 
@@ -281,4 +286,23 @@ void displayUpdate()
 
   // Send buffer to the screen
   oled.display();
+  */
+}
+
+
+void draw(void) {
+  // graphic commands to redraw the complete screen should be placed here  
+  //u8g.setFont(u8g_font_unifont);
+  u8g.setFont(u8g_font_profont22);
+  u8g.setPrintPos(0, 15); 
+  u8g.print(display.getMinutes());
+  u8g.setPrintPos(50, 15); 
+  u8g.print(display.getSeconds());
+  
+  u8g.setPrintPos(0, 35); 
+  u8g.print((int) accelerometer_event.acceleration.x);
+  
+  u8g.setPrintPos(60, 35); 
+  u8g.print((int) accelerometer_event.acceleration.y);
+  
 }

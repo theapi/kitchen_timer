@@ -78,9 +78,7 @@ void stateRun()
           if (setting_none_time == 0) {
             setting_none_time = now;
           } else if (now - setting_none_time > SETTING_WAIT) {
-            //setting_none_time = 0;
-            //setting_update_last = 0;
-            timer_state = T_OFF;
+            //timer_state = T_OFF;
           }
         //}
 
@@ -172,7 +170,7 @@ void stateRun()
         Serial.println("Sleep now");
         Serial.flush();
       }
-      goToSleep();
+      //goToSleep();
       // Wake up
       timer_state = T_WOKE;
       if (DEBUG) {

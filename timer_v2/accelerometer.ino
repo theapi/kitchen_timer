@@ -161,6 +161,14 @@ void accelerometerMonitor()
   accelerometer_event = accelerometerRead();
   int val_x = accelerometer_event.acceleration.x; // chop to an int
   int val_y = accelerometer_event.acceleration.y; // chop to an int
+  
+  
+  
+  
+return;
+
+
+
 
 
  if (val_y <= ACCEL_TILT_OFF) {
@@ -215,16 +223,16 @@ void accelerometerMonitor()
     }
   }
 
-  if (DEBUG) Serial.println(val_y);
+  //if (DEBUG) Serial.println(val_y);
 
-/*
+
   if (DEBUG) {
-    Serial.print(val_y);
-    Serial.print(" ");
-    Serial.println(setting_state);
+    Serial.print("x: "); Serial.print(val_x); Serial.print(" ");
+    Serial.print("y: "); Serial.print(val_y); Serial.print(" ");
+    Serial.print("state: "); Serial.println(setting_state);
     Serial.flush();
   }
-*/
+
 }
 
 #endif

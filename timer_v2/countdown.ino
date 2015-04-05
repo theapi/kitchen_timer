@@ -14,6 +14,15 @@ void countdownStart()
 
 void countdownUpdate()
 {
+  if (DEBUG) {
+    
+    Serial.print("min: "); Serial.print(display.getMinutes()); Serial.print(" ");
+    Serial.print("sec: "); Serial.print(display.getSeconds()); Serial.print(" ");
+    //Serial.print("state: "); Serial.println(setting_state);
+    Serial.println("");
+    Serial.flush();
+  }
+  
   if (timer_state == T_COUNTDOWN) {
 
     display.decrementTime();
