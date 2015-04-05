@@ -7,7 +7,7 @@
  * UM66T-05L: Home Sweet Home
  */
 
-#define DEBUG true
+#define DEBUG false
 
 #include <Wire.h>
 #include "U8glib.h"
@@ -199,6 +199,7 @@ void goToSleep()
   timersDisable();
 
   // Turn off the display
+  u8g.sleepOn();
   //oled.ssd1306_command(SSD1306_DISPLAYOFF);
 
   // Ensure sound is off
@@ -241,7 +242,7 @@ void goToSleep()
   power_all_enable();
 
   // Turn the display back on
-  displaySetup();
+  u8g.sleepOff();
 }
 
 /**
