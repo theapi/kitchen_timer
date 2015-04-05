@@ -50,7 +50,7 @@ enum timer_states {
   T_WOKE,
   T_ERROR
 };
-timer_states timer_state = T_COUNTDOWN;
+timer_states timer_state = T_OFF;
 
 // Time setting states
 enum setting_states {
@@ -140,7 +140,7 @@ void setup()
 
   displayUpdate();
 
-  //settingStart();
+  settingStart();
 
 }
 
@@ -156,7 +156,7 @@ void loop()
   }
 
   if (timer_state != T_ERROR) {
-    //stateRun();
+    stateRun();
     timer.run();
   }
 }
@@ -178,6 +178,7 @@ void settingStart()
   if (display.finished()) {
     timer_state = T_OFF;
     display.setMinutes(START_TIME);
+    display.setMode(0);
   }
 }
 

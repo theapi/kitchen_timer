@@ -1,7 +1,7 @@
 #ifndef ACCELEROMETER_H
 #define ACCELEROMETER_H
 
-#define ACCEL_TILT_OFF      -5 // tilt backward passed this value to turn off
+#define ACCEL_TILT_OFF      -7 // tilt backward passed this value to turn off
 #define ACCEL_TILT_COUNTDOWN 7 // tilt forward passed this value to start the countdown
 
 #define ACCEL_FREEFALL   B00000100
@@ -126,26 +126,17 @@ void accelerometerSetup(void)
   }
 }
 
-void accelerometerStartMeasuring()
-{return;
-  // get current power mode
-  int powerCTL = accel.readRegister(ADXL345_REG_POWER_CTL);
-  // set the device back in measurement mode
-  // as suggested on the datasheet, we put it in standby then in measurement mode
-  // we do this using a bitwise and (&) so that we keep the current R_POWER_CTL configuration
-  accel.writeRegister(ADXL345_REG_POWER_CTL, powerCTL & B11110011);
-  accel.writeRegister(ADXL345_REG_POWER_CTL, powerCTL & B11111011);
-
-  // set the LOW_POWER bit to 0 in R_BW_RATE: get back to full accuracy measurement (we will consume more power)
-  int bwRate = accel.readRegister(ADXL345_REG_BW_RATE);
-  accel.writeRegister(ADXL345_REG_BW_RATE, bwRate & B00001111);
-}
 
 sensors_event_t accelerometerRead(void)
 {
   // Get a new sensor event
   sensors_event_t event;
   accel.getEvent(&event);
+  
+  // Compensate for terrible calibration
+  event.acceleration.x += 3;
+  event.acceleration.y += 7;
+  
   return event;
 }
 
@@ -162,14 +153,6 @@ void accelerometerMonitor()
   int val_x = accelerometer_event.acceleration.x; // chop to an int
   int val_y = accelerometer_event.acceleration.y; // chop to an int
   
-  
-  
-  
-return;
-
-
-
-
 
  if (val_y <= ACCEL_TILT_OFF) {
     // turn off.
@@ -182,15 +165,20 @@ return;
   } else {
 
     if (timer_state == T_SETTING) {
+      if (val_x > 10) {
+        val_x = 10; 
+      } else if (val_x < -10) {
+        val_x = -10; 
+      }
       switch (val_x) {
         case 10:
         case 9:
         case 8:
-        case 7:
-        case 6:
           setting_state = S_REDUCE_FAST;
           break;
-
+ 
+        case 7:
+        case 6:
         case 5:
           setting_state = S_REDUCE_MED;
           break;
@@ -203,11 +191,11 @@ return;
         case -10:
         case -9:
         case -8:
-        case -7:
-        case -6:
           setting_state = S_INCREASE_FAST;
           break;
 
+        case -7:
+        case -6:
         case -5:
           setting_state = S_INCREASE_MED;
           break;

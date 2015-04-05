@@ -78,7 +78,7 @@ void stateRun()
           if (setting_none_time == 0) {
             setting_none_time = now;
           } else if (now - setting_none_time > SETTING_WAIT) {
-            //timer_state = T_OFF;
+            timer_state = T_OFF;
           }
         //}
 
@@ -145,23 +145,8 @@ void stateRun()
 
 
     case T_SETTING:
-    /*
-      analogWrite(PIN_RED, 22);
-      analogWrite(PIN_GREEN, 255);
-      analogWrite(PIN_BLUE, 22);
-      */
-
-      /*
-      if (interruptSource & ACCEL_SINGLE_TAP) {
-        if (interruptSource & ACCEL_DOUBLE_TAP) {
-          // Single tab will happen in a double tap too.
-          // But ignore it here.
-        } else {
-          // Just a single tap.
-          countdownStart();
-        }
-      }
-      */
+      // Show the changed values now.
+      displayUpdate();
       break;
 
     case T_OFF:
@@ -170,7 +155,7 @@ void stateRun()
         Serial.println("Sleep now");
         Serial.flush();
       }
-      //goToSleep();
+      goToSleep();
       // Wake up
       timer_state = T_WOKE;
       if (DEBUG) {
