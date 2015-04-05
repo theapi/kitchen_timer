@@ -10,7 +10,8 @@ void batteryMonitor()
 
   //long result = batteryReadVcc();
   // Set on display
-  display_volts = (int) batteryReadVcc();
+  //display_volts = (int) batteryReadVcc();
+  display.setVcc(batteryReadVcc());
 
   // Save power
   batteryEnsureAdcOff();

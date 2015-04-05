@@ -136,8 +136,9 @@ void setup()
   //timer_breath = timer.setInterval(1011, breathColourSet);
 
   // Keep an eye on the battery
-  //timer_battery = timer.setInterval(10333, batteryMonitor);
+  timer_battery = timer.setInterval(10333, batteryMonitor);
 
+  batteryMonitor();
   displayUpdate();
 
   settingStart();
@@ -188,7 +189,7 @@ void timersDisable()
 }
 
 void goToSleep()
-{return;
+{
   timer_state = T_OFF;
 
   // Reset the alarm
@@ -256,38 +257,11 @@ void displaySetup()
  */
 void displayUpdate()
 {
-  
   // picture loop
   u8g.firstPage();  
   do {
     draw();
   } while( u8g.nextPage() );
-  
-  /*
-  // Clear the buffer
-  oled.clearDisplay();
-
-  // Minutes
-  oled.setCursor(0,10);
-  oled.setTextSize(6);
-  oled.print(display.getMinutes());
-
-  // Seconds
-  oled.setCursor(50,10);
-  oled.setTextSize(2);
-  oled.print(display.getSeconds());
-
-  // Vcc
-  oled.setCursor(50,50);
-  oled.setTextSize(3);
-  oled.print(display.getVcc());
-  oled.setCursor(100,50);
-  oled.setTextSize(1);
-  oled.print("vcc");
-
-  // Send buffer to the screen
-  oled.display();
-  */
 }
 
 
@@ -306,4 +280,6 @@ void draw(void) {
   u8g.setPrintPos(60, 35); 
   u8g.print((int) accelerometer_event.acceleration.y);
   
+  u8g.setPrintPos(0, 64); 
+  u8g.print((int) display.getVcc());
 }
