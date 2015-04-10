@@ -1,8 +1,8 @@
 #ifndef ACCELEROMETER_H
 #define ACCELEROMETER_H
 
-#define ACCEL_TILT_OFF      -7 // tilt backward passed this value to turn off
-#define ACCEL_TILT_COUNTDOWN 7 // tilt forward passed this value to start the countdown
+#define ACCEL_TILT_OFF      7 // tilt backward passed this value to turn off
+#define ACCEL_TILT_COUNTDOWN -7 // tilt forward passed this value to start the countdown
 
 #define ACCEL_FREEFALL   B00000100
 #define ACCEL_INACTIVITY B00001000
@@ -132,11 +132,11 @@ sensors_event_t accelerometerRead(void)
   // Get a new sensor event
   sensors_event_t event;
   accel.getEvent(&event);
-  
+
   // Compensate for terrible calibration
   event.acceleration.x += 3;
   event.acceleration.y += 7;
-  
+
   return event;
 }
 
@@ -152,13 +152,13 @@ void accelerometerMonitor()
   accelerometer_event = accelerometerRead();
   int val_x = accelerometer_event.acceleration.x; // chop to an int
   int val_y = accelerometer_event.acceleration.y; // chop to an int
-  
 
- if (val_y <= ACCEL_TILT_OFF) {
+
+ if (val_y >= ACCEL_TILT_OFF) {
     // turn off.
     timer_state = T_OFF;
 
-  } else if (val_y >= ACCEL_TILT_COUNTDOWN) {
+  } else if (val_y <= ACCEL_TILT_COUNTDOWN) {
     if (timer_state == T_SETTING) {
       countdownStart();
     }
@@ -166,42 +166,42 @@ void accelerometerMonitor()
 
     if (timer_state == T_SETTING) {
       if (val_x > 10) {
-        val_x = 10; 
+        val_x = 10;
       } else if (val_x < -10) {
-        val_x = -10; 
+        val_x = -10;
       }
       switch (val_x) {
-        case 10:
-        case 9:
-        case 8:
-          setting_state = S_REDUCE_FAST;
-          break;
- 
-        case 7:
-        case 6:
-        case 5:
-          setting_state = S_REDUCE_MED;
-          break;
-
-        case 4:
-        case 3:
-          setting_state = S_REDUCE_SLOW;
-          break;
-
         case -10:
         case -9:
         case -8:
-          setting_state = S_INCREASE_FAST;
+          setting_state = S_REDUCE_FAST;
           break;
 
         case -7:
         case -6:
         case -5:
-          setting_state = S_INCREASE_MED;
+          setting_state = S_REDUCE_MED;
           break;
 
         case -4:
         case -3:
+          setting_state = S_REDUCE_SLOW;
+          break;
+
+        case 10:
+        case 9:
+        case 8:
+          setting_state = S_INCREASE_FAST;
+          break;
+
+        case 7:
+        case 6:
+        case 5:
+          setting_state = S_INCREASE_MED;
+          break;
+
+        case 4:
+        case 3:
           setting_state = S_INCREASE_SLOW;
           break;
 

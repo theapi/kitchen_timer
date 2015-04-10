@@ -250,7 +250,7 @@ void goToSleep()
  */
 void displaySetup()
 {
-  
+
 }
 
 /**
@@ -259,7 +259,7 @@ void displaySetup()
 void displayUpdate()
 {
   // picture loop
-  u8g.firstPage();  
+  u8g.firstPage();
   do {
     draw();
   } while( u8g.nextPage() );
@@ -267,20 +267,20 @@ void displayUpdate()
 
 
 void draw(void) {
-  // graphic commands to redraw the complete screen should be placed here  
+  // graphic commands to redraw the complete screen should be placed here
   //u8g.setFont(u8g_font_unifont);
   u8g.setFont(u8g_font_profont22);
-  u8g.setPrintPos(0, 15); 
+  u8g.setPrintPos(0, 15);
   u8g.print(display.getMinutes());
-  u8g.setPrintPos(50, 15); 
+  u8g.setPrintPos(50, 15);
   u8g.print(display.getSeconds());
-  
-  u8g.setPrintPos(0, 35); 
+
+  u8g.setPrintPos(0, 35);
   u8g.print((int) accelerometer_event.acceleration.x);
-  
-  u8g.setPrintPos(60, 35); 
+
+  u8g.setPrintPos(60, 35);
   u8g.print((int) accelerometer_event.acceleration.y);
-  
-  u8g.setPrintPos(0, 64); 
+
+  u8g.setPrintPos(0, 64);
   u8g.print((int) display.getVcc());
 }
