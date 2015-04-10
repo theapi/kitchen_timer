@@ -21,12 +21,12 @@
 
 
 
-#define START_TIME 320 // Default start at 30 minutes
+#define START_TIME 90 // Default start at 30 minutes
 
 #define ALARM_SOUND_SECONDS 14 * 1000L // How long for the sound alarm
 #define ALARM_LIGHT_SECONDS 60 * 1000L // How long for the light alarm
 
-#define SETTING_WAIT       60 * 1000L // How long to wait for a setting confirmation
+#define SETTING_WAIT       15 * 1000L // How long to wait for a setting confirmation
 
 #define PIN_PNP      13  // Keep low to stay on
 #define PIN_RED      9   // PWM red led

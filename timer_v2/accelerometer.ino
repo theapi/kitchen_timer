@@ -2,7 +2,7 @@
 #define ACCELEROMETER_H
 
 #define ACCEL_TILT_OFF      7 // tilt backward passed this value to turn off
-#define ACCEL_TILT_COUNTDOWN -7 // tilt forward passed this value to start the countdown
+#define ACCEL_TILT_COUNTDOWN -9 // tilt forward passed this value to start the countdown
 
 #define ACCEL_FREEFALL   B00000100
 #define ACCEL_INACTIVITY B00001000
