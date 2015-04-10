@@ -128,7 +128,7 @@ void setup()
   attachInterrupt(0, ISR_activity, HIGH);
 
   // Check the accelerometer.
-  timer.setInterval(250, accelerometerMonitor);
+  timer.setInterval(150, accelerometerMonitor);
 
   // Countdown with a minute resolution.
   timer_countdown = timer.setInterval(1000, countdownUpdate);
