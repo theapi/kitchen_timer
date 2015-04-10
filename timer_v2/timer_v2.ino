@@ -21,12 +21,12 @@
 
 
 
-#define START_TIME 2 // Default start at 30 minutes
+#define START_TIME 320 // Default start at 30 minutes
 
 #define ALARM_SOUND_SECONDS 14 * 1000L // How long for the sound alarm
 #define ALARM_LIGHT_SECONDS 60 * 1000L // How long for the light alarm
 
-#define SETTING_WAIT       7 * 1000L // How long to wait for a setting confirmation
+#define SETTING_WAIT       60 * 1000L // How long to wait for a setting confirmation
 
 #define PIN_PNP      13  // Keep low to stay on
 #define PIN_RED      9   // PWM red led
@@ -128,12 +128,12 @@ void setup()
   attachInterrupt(0, ISR_activity, HIGH);
 
   // Check the accelerometer.
-  timer.setInterval(150, accelerometerMonitor);
+  timer.setInterval(200, accelerometerMonitor);
 
   // Countdown with a minute resolution.
   timer_countdown = timer.setInterval(1000, countdownUpdate);
 
-  //timer_breath = timer.setInterval(1011, breathColourSet);
+  timer_breath = timer.setInterval(1011, breathColourSet);
 
   // Keep an eye on the battery
   timer_battery = timer.setInterval(10333, batteryMonitor);
@@ -269,18 +269,28 @@ void displayUpdate()
 void draw(void) {
   // graphic commands to redraw the complete screen should be placed here
   //u8g.setFont(u8g_font_unifont);
-  u8g.setFont(u8g_font_profont22);
-  u8g.setPrintPos(0, 15);
+  //u8g.setFont(u8g_font_profont22);
+  u8g.setFont(u8g_font_fub42n);
+  u8g.setFontPosTop();
+  u8g.setPrintPos(0, 0);
   u8g.print(display.getMinutes());
-  u8g.setPrintPos(50, 15);
+
+
+  //u8g.setFont(u8g_font_profont17);
+  u8g.setFont(u8g_font_fub14n);
+  u8g.setFontPosTop();
+  u8g.setPrintPos(105, 0);
   u8g.print(display.getSeconds());
 
-  u8g.setPrintPos(0, 35);
+  u8g.setFont(u8g_font_fub11n);
+  u8g.setFontPosTop();
+  u8g.setPrintPos(0, 52);
   u8g.print((int) accelerometer_event.acceleration.x);
 
-  u8g.setPrintPos(60, 35);
+  u8g.setPrintPos(23, 52);
   u8g.print((int) accelerometer_event.acceleration.y);
 
-  u8g.setPrintPos(0, 64);
+  u8g.setPrintPos(90, 52);
   u8g.print((int) display.getVcc());
+
 }

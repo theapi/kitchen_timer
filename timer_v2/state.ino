@@ -52,21 +52,21 @@ void stateRun()
 
     switch(setting_state) {
       case S_REDUCE_FAST:
-        if (now - 100 > setting_update_last) {
+        //if (now - 100 > setting_update_last) {
           setting_update_last = now;
-          display.decrementMinutes();
-        }
+          display.decrementMinutes(10);
+       // }
         break;
 
       case S_REDUCE_MED:
-        if (now - 150 > setting_update_last) {
+        //if (now - 150 > setting_update_last) {
           setting_update_last = now;
-          display.decrementMinutes();
-        }
+          display.decrementMinutes(5);
+       // }
         break;
 
       case S_REDUCE_SLOW:
-        if (now - 400 > setting_update_last) {
+        if (now - 500 > setting_update_last) {
           setting_update_last = now;
           display.decrementMinutes();
         }
@@ -86,24 +86,24 @@ void stateRun()
         break;
 
       case S_INCREASE_SLOW:
-        if (now - 400 > setting_update_last) {
+        if (now - 500 > setting_update_last) {
           setting_update_last = now;
           display.incrementMinutes();
         }
         break;
 
       case S_INCREASE_MED:
-        if (now - 150 > setting_update_last) {
+        //if (now - 150 > setting_update_last) {
           setting_update_last = now;
-          display.incrementMinutes();
-        }
+          display.incrementMinutes(5);
+        //}
         break;
 
       case S_INCREASE_FAST:
-        if (now - 100 > setting_update_last) {
+        //if (now - 100 > setting_update_last) {
           setting_update_last = now;
-          display.incrementMinutes();
-        }
+          display.incrementMinutes(10);
+        //}
         break;
     }
   }

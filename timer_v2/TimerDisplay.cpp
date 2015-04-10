@@ -45,9 +45,25 @@ void TimerDisplay::decrementMinutes()
   }
 }
 
+void TimerDisplay::decrementMinutes(uint8_t val)
+{
+  if (_data.minutes > 0) {
+    _data.minutes -= val;
+  }
+  if (_data.minutes < 1) {
+    _data.minutes = 0;
+    _data.mode = 1; // Finished
+  }
+}
+
 void TimerDisplay::incrementMinutes()
 {
   ++_data.minutes;
+}
+
+void TimerDisplay::incrementMinutes(uint8_t val)
+{
+  _data.minutes += val;
 }
 
 uint8_t TimerDisplay::finished()
