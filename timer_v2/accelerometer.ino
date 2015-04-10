@@ -57,24 +57,6 @@ void accelerometerSetup(void)
     // read the register to clear it
     accel.readRegister(ADXL345_REG_INT_SOURCE);
 
-    /*
-    // Configure which pins interrupt on what
-    accel.writeRegister(ADXL345_REG_INT_MAP, 0); // all interrupts on INT1
-    Serial.print("ADXL345_REG_INT_MAP = "); Serial.println(accel.readRegister(ADXL345_REG_INT_MAP), BIN);
-
-    accel.writeRegister(ADXL345_REG_ACT_INACT_CTL, B01110111); // activity on any axis (dc)
-    Serial.print("ADXL345_REG_ACT_INACT_CTL = "); Serial.println(accel.readRegister(ADXL345_REG_ACT_INACT_CTL), BIN);
-
-    accel.writeRegister(ADXL345_REG_THRESH_ACT, 50); // what counts as activity 0 - 255
-    Serial.print("ADXL345_REG_THRESH_ACT = "); Serial.println(accel.readRegister(ADXL345_REG_THRESH_ACT), BIN);
-
-    // Turn on interrupts
-    accel.writeRegister(ADXL345_REG_INT_ENABLE, B00110000); // double tap and activity
-    Serial.print("ADXL345_REG_INT_ENABLE = "); Serial.println(accel.readRegister(ADXL345_REG_INT_ENABLE), BIN);
-    */
-
-
-
     accel.writeRegister(ADXL345_REG_INT_MAP, B00001000); // all interrupts on INT1, except inactivity
     //accel.writeRegister(ADXL345_REG_INT_MAP, B00000000);
 
@@ -112,8 +94,8 @@ void accelerometerSetup(void)
     // set the ADXL345 in measurement and sleep Mode: this will save power while while we will still be able to detect activity
     // set the Link bit to 1 so that the activity and inactivity functions aren't concurrent but alternatively activated
     // set the AUTO_SLEEP bit to 1 so that the device automatically goes to sleep when it detects inactivity
-    // sleep sampling at 2 hz
-    accel.writeRegister(ADXL345_REG_POWER_CTL, B00111110);
+    // sleep sampling at 4 hz
+    accel.writeRegister(ADXL345_REG_POWER_CTL, B00111101);
 
     //accel.writeRegister(ADXL345_REG_POWER_CTL, B00111000);
 
