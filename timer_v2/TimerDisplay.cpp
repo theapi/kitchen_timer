@@ -5,7 +5,7 @@ TimerDisplay::TimerDisplay()
   _data.vcc = 0;
   _data.minutes = 30;
   _data.seconds = 0;
-  _data.mode = 0; 
+  _data.mode = 0;
 }
 
 void TimerDisplay::decrementTime()
@@ -14,12 +14,12 @@ void TimerDisplay::decrementTime()
     // No time left
     _data.mode = 1;
   } else {
-    
+
     if (--_data.seconds >= 60) {
       // Underflow
       --_data.seconds = 0;
     }
-    
+
     if (_data.seconds == 0) {
       _data.seconds = 59;
       if (_data.minutes == 1) {
@@ -30,7 +30,7 @@ void TimerDisplay::decrementTime()
         --_data.minutes;
       }
 
-    } 
+    }
 
   }
 }

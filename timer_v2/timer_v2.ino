@@ -21,7 +21,7 @@
 
 
 
-#define START_TIME 30 // Default start at 30 minutes
+#define START_TIME 2 // Default start at 30 minutes
 
 #define ALARM_SOUND_SECONDS 14 * 1000L // How long for the sound alarm
 #define ALARM_LIGHT_SECONDS 60 * 1000L // How long for the light alarm
@@ -141,6 +141,7 @@ void setup()
   batteryMonitor();
   displayUpdate();
 
+  display.setMinutes(START_TIME);
   settingStart();
 
 }
@@ -177,7 +178,6 @@ void settingStart()
 
   // Set to the default start time if needed.
   if (display.finished()) {
-    timer_state = T_OFF;
     display.setMinutes(START_TIME);
     display.setMode(0);
   }
