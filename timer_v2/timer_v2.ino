@@ -29,9 +29,9 @@
 #define SETTING_WAIT       15 * 1000L // How long to wait for a setting confirmation
 
 #define PIN_PNP      13  // Keep low to stay on
-#define PIN_RED      9   // PWM red led
+#define PIN_RED      11   // PWM red led
 #define PIN_GREEN    10   // PWM green led
-#define PIN_BLUE     11   // PWM blue led
+#define PIN_BLUE     9   // PWM blue led
 #define PIN_SOUND    12  // The sound chip, LOW to play - UM66T-05L: Home Sweet Home :)
 
 
