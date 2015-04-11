@@ -7,14 +7,17 @@
  */
 void batteryMonitor()
 {
-
-  //long result = batteryReadVcc();
-  // Set on display
-  //display_volts = (int) batteryReadVcc();
-  display.setVcc(batteryReadVcc());
+  long result = batteryReadVcc();
+  if (DEBUG) {
+    Serial.print("VCC: "); Serial.println(result);
+    Serial.flush();
+  }
 
   // Save power
   batteryEnsureAdcOff();
+
+  // Set on display
+  display.setVcc((int) result);
 }
 
 void batteryEnsureAdcOff() {
@@ -38,6 +41,9 @@ long batteryReadVcc()
   #else
     ADMUX = _BV(REFS0) | _BV(MUX3) | _BV(MUX2) | _BV(MUX1);
   #endif
+
+  // Power up the ADC, default values: no interrupts
+  ADCSRA = (1 << ADEN);
 
   delay(2); // Wait for Vref to settle
   ADCSRA |= _BV(ADSC); // Start conversion

@@ -136,7 +136,7 @@ void setup()
   timer_breath = timer.setInterval(1011, breathColourSet);
 
   // Keep an eye on the battery
-  timer_battery = timer.setInterval(10333, batteryMonitor);
+  timer_battery = timer.setInterval(3333, batteryMonitor);
 
   batteryMonitor();
   displayUpdate();
