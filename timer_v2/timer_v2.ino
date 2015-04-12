@@ -13,7 +13,6 @@
 #include "U8glib.h"
 #include <Adafruit_Sensor.h>
 #include <Adafruit_ADXL345_U.h>
-#include <avr/wdt.h>
 #include <avr/sleep.h>    // Sleep Modes
 #include <avr/power.h>    // Power management
 #include "SimpleTimer.h"
@@ -84,8 +83,6 @@ U8GLIB_SSD1306_128X64 u8g(U8G_I2C_OPT_NONE|U8G_I2C_OPT_DEV_0);
 
 TimerDisplay display = TimerDisplay();
 
-int display_volts = 0;
-byte running_flag = 0; // Whether running ok (for watchdog reset power off)
 
 void ISR_activity()
 {
@@ -95,15 +92,6 @@ void ISR_activity()
 
 void setup()
 {
-  wdt_reset(); // Ensure watchdog is reset
-
-  pinMode(PIN_PNP, OUTPUT);
-  // Set to high so a watchdog reset will power off the device.
-  digitalWrite(PIN_PNP, HIGH);
-  running_flag = 0;
-  // Let the watchdog monitor for hangups
-  //wdt_enable(WDTO_8S);
-
   if (DEBUG) {
     Serial.begin(9600);
   }
@@ -149,15 +137,6 @@ void setup()
 
 void loop()
 {
-  // Tell watchdog all is ok.
-  wdt_reset();
-  if (!running_flag) {
-    // Take control of the pnp here
-    // so the watchdog can remove power.
-    digitalWrite(PIN_PNP, LOW);
-    running_flag = 1;
-  }
-
   if (timer_state != T_ERROR) {
     stateRun();
     timer.run();
