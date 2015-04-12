@@ -39,7 +39,8 @@
 byte breath_r = 0;
 byte breath_g = 0;
 byte breath_b = 200;
-float breath_speed = 6000.0;
+byte breath_speed = 100;
+byte breath_steps = 2;
 
 // The timer states.
 enum timer_states {

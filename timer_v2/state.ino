@@ -110,11 +110,12 @@ void stateRun()
 
   switch(timer_state) {
     case T_COUNTDOWN:
-      breath(breath_speed, breath_r, breath_g, breath_b);
+      //breath(breath_speed, breath_r, breath_g, breath_b);
+      breathWave(breath_speed, breath_steps, breath_r, breath_g, breath_b);
       break;
 
     case T_ALARM:
-      breath(250.0, breath_r, breath_g, breath_b); // Faster red
+      breath(250.0, breath_r, breath_g, breath_b); // Funky flashing red
       if (alarm_start == 0) {
         // Start the alarm
         alarm_start = millis();
