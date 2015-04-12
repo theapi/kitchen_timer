@@ -201,8 +201,8 @@ void goToSleep()
   sleep_enable();
 
   // turn off brown-out enable in software
-  //MCUCR = bit (BODS) | bit (BODSE);  // turn on brown-out enable select
-  //MCUCR = bit (BODS);        // this must be done within 4 clock cycles of above
+  MCUCR = bit (BODS) | bit (BODSE);  // turn on brown-out enable select
+  MCUCR = bit (BODS);        // this must be done within 4 clock cycles of above
 
   // Turn interrupt back on so the wake up signal can happen
   interrupts();
