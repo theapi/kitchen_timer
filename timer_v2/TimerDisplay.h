@@ -7,6 +7,7 @@
 #define TIMERDISPLAY_H
 
 #include <stdint.h>
+#include <Arduino.h>
 
 class TimerDisplay{
   public:
@@ -30,8 +31,8 @@ class TimerDisplay{
     void setMinutes(uint16_t val);
     void decrementMinutes();
     void incrementMinutes();
-    void decrementMinutes(uint8_t val);
-    void incrementMinutes(uint8_t val);
+    void decrementMinutes(uint16_t val);
+    void incrementMinutes(uint16_t val);
 
     // How many seconds to display
     uint8_t getSeconds();

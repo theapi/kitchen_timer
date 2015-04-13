@@ -14,20 +14,17 @@ void TimerDisplay::decrementTime()
     // Do nothing
     return;
   }
-
-  if (--_data.seconds >= 60) {
-    // Underflow, so set to zero
-    _data.seconds = 0;
+  
+  if (_data.seconds == 0) {
+    _data.seconds = 60;
+    this->decrementMinutes();
   }
+  
+  --_data.seconds;
 
   if (_data.minutes == 0 && _data.seconds == 0) {
     // No time left
     _data.mode = 1;
-  } else {
-    if (_data.seconds == 0) {
-      _data.seconds = 59;
-      this->decrementMinutes();
-    }
   }
 }
 
@@ -38,7 +35,7 @@ void TimerDisplay::decrementMinutes()
   }
 }
 
-void TimerDisplay::decrementMinutes(uint8_t val)
+void TimerDisplay::decrementMinutes(uint16_t val)
 {
   if (_data.minutes > val) {
     _data.minutes -= val;
@@ -52,7 +49,7 @@ void TimerDisplay::incrementMinutes()
   }
 }
 
-void TimerDisplay::incrementMinutes(uint8_t val)
+void TimerDisplay::incrementMinutes(uint16_t val)
 {
   if (_data.minutes < 999 - val) {
   _data.minutes += val;
