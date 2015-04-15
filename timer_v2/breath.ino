@@ -11,11 +11,11 @@ void breathColourSet()
       breath_b = 255;
     } else if (display.getMinutes() > 14) {
       // Greater than 15 minutes; green, slow
-      breath_speed = 100;
-      breath_steps = 2;
+      breath_speed = 70;
+      breath_steps = 1;
       breath_r = 0;
       breath_g = 255;
-      breath_b = 30;
+      breath_b = 0;
     } else if (display.getMinutes() > 4) {
       // The last 5 minutes; yellow, slow
       breath_speed = 50;
@@ -47,7 +47,7 @@ void breathColourSet()
 void breathWave(unsigned long interval, byte steps, byte red, byte green, byte blue)
 {
   static byte wave[] = {
-    84 ,87 ,90 ,93 ,96 ,99 ,102,105,108,111,
+    109,110,110,111,112,
     115,118,121,124,127,130,133,136,139,143,
     146,149,152,155,158,161,164,167,170,173,
     176,178,181,184,187,190,192,195,198,200,
@@ -61,8 +61,8 @@ void breathWave(unsigned long interval, byte steps, byte red, byte green, byte b
     217,215,212,210,208,205,203,200,198,195,
     192,190,187,184,181,178,176,173,170,167,
     164,161,158,155,152,149,146,143,139,136,
-    133,130,127,124,121,118,115,111,108,105,
-    102,99 ,96 ,93 ,90 ,87 ,84
+    133,130,127,124,121,118,115,112,111,110,
+    110,109
   };
   static byte wave_index = 0;  
   static unsigned long last = 0;
@@ -77,8 +77,8 @@ void breathWave(unsigned long interval, byte steps, byte red, byte green, byte b
     byte val_b = 255 - (map(wave[wave_index], 0, 255, 0, blue));
   
     wave_index += steps;
-    
-    if (wave_index > 156) {
+  
+    if (wave_index > 146) {
       wave_index = 0;
     }
     
