@@ -128,9 +128,6 @@ sensors_event_t accelerometerRead(void)
  */
 void accelerometerMonitor()
 {
-  // Store the exiasting event so it can be compared with the reading about to be taken
-  sensors_event_t previous_event = accelerometer_event;
-
   accelerometer_event = accelerometerRead();
   int val_x = accelerometer_event.acceleration.x; // chop to an int
   int val_y = accelerometer_event.acceleration.y; // chop to an int
