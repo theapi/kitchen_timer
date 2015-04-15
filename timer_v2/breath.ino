@@ -47,7 +47,7 @@ void breathColourSet()
 void breathWave(unsigned long interval, byte steps, byte red, byte green, byte blue)
 {
   static byte wave[] = {
-    108,111,
+    84 ,87 ,90 ,93 ,96 ,99 ,102,105,108,111,
     115,118,121,124,127,130,133,136,139,143,
     146,149,152,155,158,161,164,167,170,173,
     176,178,181,184,187,190,192,195,198,200,
@@ -61,8 +61,9 @@ void breathWave(unsigned long interval, byte steps, byte red, byte green, byte b
     217,215,212,210,208,205,203,200,198,195,
     192,190,187,184,181,178,176,173,170,167,
     164,161,158,155,152,149,146,143,139,136,
-    133,130,127,124,121,118,115,111,108
-  }; 
+    133,130,127,124,121,118,115,111,108,105,
+    102,99 ,96 ,93 ,90 ,87 ,84
+  };
   static byte wave_index = 0;  
   static unsigned long last = 0;
   
@@ -77,7 +78,7 @@ void breathWave(unsigned long interval, byte steps, byte red, byte green, byte b
   
     wave_index += steps;
     
-    if (wave_index > 140) {
+    if (wave_index > 156) {
       wave_index = 0;
     }
     
