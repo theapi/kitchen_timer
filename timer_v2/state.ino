@@ -5,8 +5,6 @@
 void stateRun()
 {
   unsigned long now;
-  
-  batteryMonitor();
 
   if (interrupt_flag) {
 

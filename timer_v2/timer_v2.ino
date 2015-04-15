@@ -21,7 +21,6 @@
 
 
 #define START_TIME 90 // Default start at 30 minutes
-#define BATTERY_INTERVAL 10 // Seconds between battery reads
 
 #define ALARM_SOUND_SECONDS 14 * 1000L // How long for the sound alarm
 #define ALARM_LIGHT_SECONDS 60 * 1000L // How long for the light alarm
@@ -126,7 +125,7 @@ void setup()
   timer_breath = timer.setInterval(1011, breathColourSet);
 
   // Keep an eye on the battery
-  //timer_battery = timer.setInterval(3333, batteryMonitor);
+  timer_battery = timer.setInterval(3333, batteryMonitor);
 
   batteryMonitor();
   displayUpdate();
