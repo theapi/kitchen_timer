@@ -31,7 +31,7 @@
 #define PIN_RED      11   // PWM red led
 #define PIN_GREEN    10   // PWM green led
 #define PIN_BLUE     9   // PWM blue led
-#define PIN_SOUND    12  // The sound chip, LOW to play - UM66T-05L: Home Sweet Home :)
+#define PIN_SOUND    12  // The sound chip, HIGH to play - UM66T-05L: Home Sweet Home :)
 
 
 
@@ -108,7 +108,7 @@ void setup()
 
   // Sound
   pinMode(PIN_SOUND, OUTPUT);
-  digitalWrite(PIN_SOUND, HIGH); // OFF
+  digitalWrite(PIN_SOUND, LOW); // OFF
 
   //displaySetup();
   accelerometerSetup();
@@ -186,7 +186,7 @@ void goToSleep()
   //oled.ssd1306_command(SSD1306_DISPLAYOFF);
 
   // Ensure sound is off
-  digitalWrite(PIN_SOUND, HIGH);
+  digitalWrite(PIN_SOUND, LOW);
 
   // Ensure the led is OFF (common anode)
   digitalWrite(PIN_RED, HIGH);

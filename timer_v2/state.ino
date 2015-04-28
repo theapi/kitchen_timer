@@ -119,7 +119,7 @@ void stateRun()
       if (alarm_start == 0) {
         // Start the alarm
         alarm_start = millis();
-        digitalWrite(PIN_SOUND, LOW); // ON
+        digitalWrite(PIN_SOUND, HIGH); // ON
       } else {
         // Handle the running alarm
         byte finished_sound = 0;
@@ -128,7 +128,7 @@ void stateRun()
         if (now - alarm_start > ALARM_SOUND_SECONDS) {
           // stop the sound
           finished_sound = 1;
-          digitalWrite(PIN_SOUND, HIGH); // OFF
+          digitalWrite(PIN_SOUND, LOW); // OFF
         }
         if (now - alarm_start > ALARM_LIGHT_SECONDS) {
           // stop the light
