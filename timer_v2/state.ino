@@ -2,6 +2,8 @@
  * The state machine
  */
 
+#define FORCE_SLOW_THRESHOLD 12 // Slower than this settings is forced to be slow.
+
 void stateRun()
 {
   unsigned long now;
@@ -52,17 +54,23 @@ void stateRun()
 
     switch(setting_state) {
       case S_REDUCE_FAST:
-        //if (now - 100 > setting_update_last) {
-          setting_update_last = now;
+        setting_update_last = now;
+        if (display.getMinutes() < FORCE_SLOW_THRESHOLD) {
+          // Force it to be slow
+          setting_state = S_REDUCE_SLOW;
+        } else {
           display.decrementMinutes(10);
-       // }
+        }
         break;
 
       case S_REDUCE_MED:
-        //if (now - 150 > setting_update_last) {
+        if (display.getMinutes() < FORCE_SLOW_THRESHOLD) {
+          // Force it to be slow
+          setting_state = S_REDUCE_SLOW;
+        } else {
           setting_update_last = now;
           display.decrementMinutes(5);
-       // }
+        }
         break;
 
       case S_REDUCE_SLOW:
