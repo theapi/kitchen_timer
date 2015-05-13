@@ -13,10 +13,10 @@ void batteryMonitor()
     Serial.flush();
   }
 
-  if (result < 3500) {
+  if (result < 3200) {
     // double check
     result = readVcc();
-    if (result < 3500) {
+    if (result < 3200) {
       // Battery too, low sleep.
      timer_state = T_OFF; 
     }
