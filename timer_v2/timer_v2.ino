@@ -128,6 +128,7 @@ void setup()
   timer_battery = timer.setInterval(3333, batteryMonitor);
 
   batteryMonitor();
+  
   displayUpdate();
 
   display.setMinutes(START_TIME);
@@ -163,6 +164,13 @@ void settingStart()
   if (display.finished()) {
     display.setMinutes(START_TIME);
     display.setMode(0);
+  } else if (display.getVcc() < 3500) {
+    // not enough power
+    analogWrite(PIN_RED, 0); // red full on
+    delay(5000); // Yep, delay so nothing else happens.
+    analogWrite(PIN_RED, 255); // red off
+    // sleep
+    timer_state = T_OFF; 
   }
 }
 
