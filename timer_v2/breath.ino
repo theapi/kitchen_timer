@@ -4,17 +4,17 @@ void breathColourSet()
   if (timer_state == T_COUNTDOWN) {
     if (display.getMinutes() > 29) {
       // Greater than 30 minutes; blue, calm
-      breath_speed = 100;
-      breath_steps = 1;
+      breath_speed = 1250;
+      breath_steps = 0; // no breathing
       breath_r = 0;
       breath_g = 0;
-      breath_b = 255;
+      breath_b = 45;
     } else if (display.getMinutes() > 14) {
       // Greater than 15 minutes; green, slow
-      breath_speed = 70;
-      breath_steps = 1;
+      breath_speed = 1250;
+      breath_steps = 0; // no breathing
       breath_r = 0;
-      breath_g = 255;
+      breath_g = 45;
       breath_b = 0;
     } else if (display.getMinutes() > 4) {
       // The last 5 minutes; yellow, slow
@@ -66,26 +66,39 @@ void breathWave(unsigned long interval, byte steps, byte red, byte green, byte b
   };
   static byte wave_index = 0;  
   static unsigned long last = 0;
+
+  byte val_r = 255;
+  byte val_g = 255;
+  byte val_b = 255;
   
   unsigned long now = millis();
   if (now - last > interval) {
     last = now;
     
-    // inverse because common anode. HIGH is off
-    byte val_r = 255 - (map(wave[wave_index], 0, 255, 0, red));
-    byte val_g = 255 - (map(wave[wave_index], 0, 255, 0, green));
-    byte val_b = 255 - (map(wave[wave_index], 0, 255, 0, blue));
-  
-    wave_index += steps;
-  
-    if (wave_index > 146) {
-      wave_index = 0;
+    if (steps == 0) {
+      // no breathing just set colour
+      val_r = 255 - red;
+      val_g = 255 - green;
+      val_b = 255 - blue;
+    } else {
+      // inverse because common anode. HIGH is off
+      val_r = 255 - (map(wave[wave_index], 0, 255, 0, red));
+      val_g = 255 - (map(wave[wave_index], 0, 255, 0, green));
+      val_b = 255 - (map(wave[wave_index], 0, 255, 0, blue));
+    
+      wave_index += steps;
+    
+      if (wave_index > 146) {
+        wave_index = 0;
+      }
     }
     
     analogWrite(PIN_RED,   val_r);
     analogWrite(PIN_GREEN, val_g);
     analogWrite(PIN_BLUE,  val_b);
   }
+   
+  
 }
 
 /**

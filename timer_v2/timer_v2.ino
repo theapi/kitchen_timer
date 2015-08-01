@@ -38,7 +38,7 @@
 byte breath_r = 0;
 byte breath_g = 0;
 byte breath_b = 200;
-byte breath_speed = 100;
+unsigned long breath_speed = 100;
 byte breath_steps = 2;
 
 // The timer states.
@@ -148,9 +148,9 @@ void settingStart()
   if (timer_state == T_ERROR) return;
 
   // Purple
-  analogWrite(PIN_RED, 22);
+  analogWrite(PIN_RED, 220);
   analogWrite(PIN_GREEN, 255);
-  analogWrite(PIN_BLUE, 22);
+  analogWrite(PIN_BLUE, 220);
 
   setting_none_time = 0;
   setting_update_last = 0;
